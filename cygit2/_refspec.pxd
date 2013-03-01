@@ -15,5 +15,3 @@ cdef extern from "refspec.h":
     int git_refspec_transform(char *out, size_t outlen, git_refspec *spec, char *name)
 
     int git_refspec_rtransform(char *out, size_t outlen, git_refspec *spec, char *name)
-
-

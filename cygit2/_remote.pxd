@@ -93,5 +93,3 @@ cdef extern from "remote.h":
     void git_remote_set_update_fetchhead(git_remote *remote, int value)
 
     int git_remote_is_valid_name(char *remote_name)
-
-

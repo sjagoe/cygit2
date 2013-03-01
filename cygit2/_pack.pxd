@@ -21,5 +21,3 @@ cdef extern from "pack.h":
     uint32_t git_packbuilder_written(git_packbuilder *pb)
 
     void git_packbuilder_free(git_packbuilder *pb)
-
-

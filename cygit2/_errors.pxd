@@ -54,5 +54,3 @@ cdef extern from "errors.h":
     void giterr_set_str(int error_class, char *string)
 
     void giterr_set_oom()
-
-

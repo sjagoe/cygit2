@@ -22,5 +22,3 @@ cdef extern from "clone.h":
     ctypedef git_clone_options git_clone_options
 
     int git_clone(git_repository **out, char *url, char *local_path, git_clone_options *options)
-
-

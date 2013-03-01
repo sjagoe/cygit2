@@ -7,5 +7,3 @@ cdef extern from "ignore.h":
     int git_ignore_clear_internal_rules(git_repository *repo)
 
     int git_ignore_path_is_ignored(int *ignored, git_repository *repo, char *path)
-
-

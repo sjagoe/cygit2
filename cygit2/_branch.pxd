@@ -21,5 +21,3 @@ cdef extern from "branch.h":
     int git_branch_is_head(git_reference *branch)
 
     int git_branch_remote_name(char *remote_name_out, size_t buffer_size, git_repository *repo, char *canonical_branch_name)
-
-

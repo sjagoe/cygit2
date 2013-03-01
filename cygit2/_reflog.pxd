@@ -27,5 +27,3 @@ cdef extern from "reflog.h":
     char *git_reflog_entry_message(git_reflog_entry *entry)
 
     void git_reflog_free(git_reflog *reflog)
-
-

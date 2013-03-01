@@ -27,5 +27,3 @@ cdef extern from "push.h":
     int git_push_status_foreach(git_push *push, int (*cb)(char *, char *, void *), void *data)
 
     void git_push_free(git_push *push)
-
-

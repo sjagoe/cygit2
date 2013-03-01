@@ -64,5 +64,3 @@ cdef extern from "refs.h":
     int git_reference_peel(git_object **out, git_reference *ref, git_otype type)
 
     int git_reference_is_valid_name(char *refname)
-
-

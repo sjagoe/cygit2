@@ -60,5 +60,3 @@ cdef extern from "status.h":
         int w_status
         __wait_N4wait3DOT_1E_t __wait_terminated
         __wait_N4wait3DOT_2E_t __wait_stopped
-
-

@@ -39,5 +39,3 @@ cdef extern from "tag.h":
     int git_tag_foreach(git_repository *repo, git_tag_foreach_cb callback, void *payload)
 
     int git_tag_peel(git_object **tag_target_out, git_tag *tag)
-
-

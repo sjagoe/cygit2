@@ -5,5 +5,3 @@ cdef extern from "threads.h":
     int git_threads_init()
 
     void git_threads_shutdown()
-
-

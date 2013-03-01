@@ -177,5 +177,3 @@ cdef extern from "diff.h":
     int git_diff_blobs(git_blob *old_blob, git_blob *new_blob, git_diff_options *options, git_diff_file_cb file_cb, git_diff_hunk_cb hunk_cb, git_diff_data_cb line_cb, void *payload)
 
     int git_diff_blob_to_buffer(git_blob *old_blob, char *buffer, size_t buffer_len, git_diff_options *options, git_diff_file_cb file_cb, git_diff_hunk_cb hunk_cb, git_diff_data_cb data_cb, void *payload)
-
-

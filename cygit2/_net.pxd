@@ -13,5 +13,3 @@ cdef extern from "net.h":
         char *name
 
     ctypedef int (*git_headlist_cb)(git_remote_head *, void *)
-
-

@@ -9,5 +9,3 @@ cdef extern from "cred_helpers.h":
     ctypedef git_cred_userpass_payload git_cred_userpass_payload
 
     int git_cred_userpass(git_cred **cred, char *url, char *user_from_url, unsigned int allowed_types, void *payload)
-
-

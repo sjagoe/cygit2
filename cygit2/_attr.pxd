@@ -21,5 +21,3 @@ cdef extern from "attr.h":
     void git_attr_cache_flush(git_repository *repo)
 
     int git_attr_add_macro(git_repository *repo, char *name, char *values)
-
-

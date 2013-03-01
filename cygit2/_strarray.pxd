@@ -11,5 +11,3 @@ cdef extern from "strarray.h":
     void git_strarray_free(git_strarray *array)
 
     int git_strarray_copy(git_strarray *tgt, git_strarray *src)
-
-

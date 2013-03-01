@@ -29,5 +29,3 @@ cdef extern from "revwalk.h":
     void git_revwalk_free(git_revwalk *walk)
 
     git_repository *git_revwalk_repository(git_revwalk *walk)
-
-

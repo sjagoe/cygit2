@@ -43,5 +43,3 @@ cdef extern from "oid.h":
     int git_oid_shorten_add(git_oid_shorten *os, char *text_id)
 
     void git_oid_shorten_free(git_oid_shorten *os)
-
-

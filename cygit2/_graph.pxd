@@ -3,5 +3,3 @@
 cdef extern from "graph.h":
 
     int git_graph_ahead_behind(size_t *ahead, size_t *behind, git_repository *repo, git_oid *one, git_oid *two)
-
-

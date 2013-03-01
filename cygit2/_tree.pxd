@@ -65,5 +65,3 @@ cdef extern from "tree.h":
         GIT_TREEWALK_POST
 
     int git_tree_walk(git_tree *tree, git_treewalk_mode mode, git_treewalk_cb callback, void *payload)
-
-

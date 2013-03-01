@@ -47,5 +47,3 @@ cdef extern from "odb.h":
     size_t git_odb_object_size(git_odb_object *object)
 
     git_otype git_odb_object_type(git_odb_object *object)
-
-

@@ -37,5 +37,3 @@ cdef extern from "commit.h":
     int git_commit_create(git_oid *id, git_repository *repo, char *update_ref, git_signature *author, git_signature *committer, char *message_encoding, char *message, git_tree *tree, int parent_count, git_commit **parents)
 
     int git_commit_create_v(git_oid *id, git_repository *repo, char *update_ref, git_signature *author, git_signature *committer, char *message_encoding, char *message, git_tree *tree, int parent_count)
-
-

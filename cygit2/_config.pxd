@@ -99,5 +99,3 @@ cdef extern from "config.h":
     int git_config_parse_int32(int32_t *out, char *value)
 
     int git_config_parse_int64(int64_t *out, char *value)
-
-

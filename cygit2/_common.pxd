@@ -17,5 +17,3 @@ cdef extern from "common.h":
         GIT_OPT_SET_MWINDOW_MAPPED_LIMIT
 
     void git_libgit2_opts(int option)
-
-

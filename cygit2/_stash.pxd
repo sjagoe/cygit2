@@ -18,5 +18,3 @@ cdef extern from "stash.h":
     int git_stash_foreach(git_repository *repo, git_stash_cb callback, void *payload)
 
     int git_stash_drop(git_repository *repo, size_t index)
-
-

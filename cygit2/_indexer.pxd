@@ -41,5 +41,3 @@ cdef extern from "indexer.h":
     git_oid *git_indexer_hash(git_indexer *idx)
 
     void git_indexer_free(git_indexer *idx)
-
-

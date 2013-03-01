@@ -45,5 +45,3 @@ cdef extern from "odb_backend.h":
     int git_odb_backend_loose(git_odb_backend **out, char *objects_dir, int compression_level, int do_fsync)
 
     int git_odb_backend_one_pack(git_odb_backend **out, char *index_file)
-
-

@@ -3,5 +3,3 @@
 cdef extern from "message.h":
 
     int git_message_prettify(char *out, size_t out_size, char *message, int strip_comments)
-
-

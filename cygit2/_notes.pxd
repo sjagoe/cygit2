@@ -19,5 +19,3 @@ cdef extern from "notes.h":
     int git_note_default_ref(char **out, git_repository *repo)
 
     int git_note_foreach(git_repository *repo, char *notes_ref, git_note_foreach_cb note_cb, void *payload)
-
-

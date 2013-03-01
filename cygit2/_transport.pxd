@@ -88,5 +88,3 @@ cdef extern from "transport.h":
     int git_smart_subtransport_http(git_smart_subtransport **out, git_transport *owner)
 
     int git_smart_subtransport_git(git_smart_subtransport **out, git_transport *owner)
-
-

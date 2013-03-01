@@ -481,5 +481,3 @@ cdef extern from "types.h":
     ctypedef __fsblkcnt64_t fsblkcnt64_t
 
     ctypedef __fsfilcnt64_t fsfilcnt64_t
-
-

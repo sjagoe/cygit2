@@ -25,5 +25,3 @@ cdef extern from "blob.h":
     int git_blob_create_frombuffer(git_oid *oid, git_repository *repo, void *buffer, size_t len)
 
     int git_blob_is_binary(git_blob *blob)
-
-

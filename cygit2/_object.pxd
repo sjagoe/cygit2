@@ -23,5 +23,3 @@ cdef extern from "object.h":
     size_t git_object__size(git_otype type)
 
     int git_object_peel(git_object **peeled, git_object *object, git_otype target_type)
-
-

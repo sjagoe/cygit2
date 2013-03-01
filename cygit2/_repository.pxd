@@ -106,5 +106,3 @@ cdef extern from "repository.h":
         GIT_REPOSITORY_STATE_APPLY_MAILBOX_OR_REBASE
 
     int git_repository_state(git_repository *repo)
-
-

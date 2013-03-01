@@ -3,5 +3,3 @@
 cdef extern from "revparse.h":
 
     int git_revparse_single(git_object **out, git_repository *repo, char *spec)
-
-

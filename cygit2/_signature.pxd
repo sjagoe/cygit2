@@ -9,5 +9,3 @@ cdef extern from "signature.h":
     git_signature *git_signature_dup(git_signature *sig)
 
     void git_signature_free(git_signature *sig)
-
-

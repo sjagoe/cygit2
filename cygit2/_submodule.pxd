@@ -90,5 +90,3 @@ cdef extern from "submodule.h":
     int git_submodule_status(unsigned int *status, git_submodule *submodule)
 
     int git_submodule_location(unsigned int *location_status, git_submodule *submodule)
-
-

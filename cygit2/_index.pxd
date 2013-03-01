@@ -100,5 +100,3 @@ cdef extern from "index.h":
     int git_index_reuc_add(git_index *index, char *path, int ancestor_mode, git_oid *ancestor_id, int our_mode, git_oid *our_id, int their_mode, git_oid *their_id)
 
     int git_index_reuc_remove(git_index *index, size_t n)
-
-

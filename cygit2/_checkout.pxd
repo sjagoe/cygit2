@@ -54,5 +54,3 @@ cdef extern from "checkout.h":
     int git_checkout_index(git_repository *repo, git_index *index, git_checkout_opts *opts)
 
     int git_checkout_tree(git_repository *repo, git_object *treeish, git_checkout_opts *opts)
-
-
