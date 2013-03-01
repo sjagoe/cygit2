@@ -2,15 +2,6 @@
 
 cdef extern from "reset.h":
 
-    cdef struct git_repository:
-        pass
-
-    cdef struct git_object:
-        pass
-
-    cdef struct git_strarray:
-        pass
-
     cdef enum git_reset_t:
         GIT_RESET_SOFT
         GIT_RESET_MIXED

@@ -2,9 +2,6 @@
 
 cdef extern from "stash.h":
 
-    cdef struct git_oid:
-        pass
-
     cdef enum git_stash_flags:
         GIT_STASH_DEFAULT
         GIT_STASH_KEEP_INDEX

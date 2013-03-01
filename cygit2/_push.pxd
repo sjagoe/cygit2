@@ -2,12 +2,6 @@
 
 cdef extern from "push.h":
 
-    cdef struct git_push:
-        pass
-
-    cdef struct git_remote:
-        pass
-
     cdef struct git_push_options:
         unsigned int version
         unsigned int pb_parallelism
