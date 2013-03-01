@@ -1,7 +1,5 @@
 import cython
 
-from libc.stdint cimport int64_t
-
 from _git2 cimport git_repository, git_repository_open
 
 
