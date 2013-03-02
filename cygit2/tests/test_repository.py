@@ -23,6 +23,11 @@ class TestRepository(unittest.TestCase):
         repo = Repository.init(self.repo_dir)
         self.assertEqual(repo.path, os.path.join(self.repo_dir, '.git/'))
 
+    def test_repository_init_bare(self):
+        repo = Repository.init(self.repo_dir, bare=True)
+        self.assertEqual(repo.path, self.repo_dir + '/')
+        self.assertTrue(os.path.exists(os.path.join(self.repo_dir, 'config')))
+
 
 if __name__ == '__main__':
     unittest.main()
