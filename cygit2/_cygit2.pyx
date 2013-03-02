@@ -1,9 +1,12 @@
 import cython
 
-from libc.stdlib cimport malloc
-
 from _git2 cimport git_repository, git_repository_open, git_repository_path, \
-    git_clone, git_clone_options
+    git_repository_init
+
+
+cdef assert_repository(Repository repo):
+    if repo._repository is NULL:
+        raise RuntimeError('Invalid Repository')
 
 
 cdef class Repository:
@@ -14,8 +17,14 @@ cdef class Repository:
     def open(cls, path):
         repo = Repository()
         git_repository_open(cython.address(repo._repository), path)
-        if repo._repository is NULL:
-            raise RuntimeError('No repository at {!r}'.format(path))
+        assert_repository(repo)
+        return repo
+
+    @classmethod
+    def init(cls, path, bare=False):
+        repo = Repository()
+        git_repository_init(cython.address(repo._repository), path, bare)
+        assert_repository(repo)
         return repo
 
     property path:

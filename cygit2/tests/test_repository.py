@@ -19,6 +19,10 @@ class TestRepository(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             repo = Repository.open(self.repo_dir)
 
+    def test_repository_init(self):
+        repo = Repository.init(self.repo_dir)
+        self.assertEqual(repo.path, os.path.join(self.repo_dir, '.git/'))
+
 
 if __name__ == '__main__':
     unittest.main()
