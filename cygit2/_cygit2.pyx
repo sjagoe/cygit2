@@ -12,6 +12,7 @@ from _git2 cimport \
     \
     git_reference, git_reference_free, git_reference_lookup, \
     git_reference_cmp, git_reference_has_log, git_reference_list, \
+    git_reference_is_valid_name, \
     \
     GIT_REF_LISTALL, \
     \
@@ -208,6 +209,9 @@ cdef class Repository:
         return conf
 
     def lookup_ref(self, name):
+        if git_reference_is_valid_name(name) == 0:
+            raise LibGit2ReferenceError('Invalid reference name {}'.format(
+                name))
         cdef int error
         ref = Reference()
         error = git_reference_lookup(cython.address(ref._reference),
