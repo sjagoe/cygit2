@@ -30,6 +30,15 @@ class TestReference(RepositoryFixture):
     def test_has_log(self):
         self.assertFalse(self.ref.has_log())
 
+    def test_is_branch_empty_repo(self):
+        self.assertFalse(self.ref.is_branch())
+
+    def test_is_packed_empty_repo(self):
+        self.assertFalse(self.ref.is_packed())
+
+    def test_is_remote_empty_repo(self):
+        self.assertFalse(self.ref.is_remote())
+
 
 if __name__ == '__main__':
     unittest.main()
