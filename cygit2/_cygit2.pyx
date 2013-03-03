@@ -9,9 +9,22 @@ from _git2 cimport git_remote_callbacks, GIT_REMOTE_CALLBACKS_VERSION
 from _git2 cimport const_git_error, giterr_last
 
 
+class LibGit2Error(Exception): pass
+
+
 cdef assert_repository(Repository repo):
     if repo._repository is NULL:
-        raise RuntimeError('Invalid Repository')
+        raise LibGit2Error('Invalid Repository')
+
+
+cdef check_error(int error):
+    cdef const_git_error* err
+    if error != 0:
+        err = giterr_last()
+        if err is not NULL:
+            raise LibGit2Error(err.message)
+        else:
+            raise LibGit2Error('Unknown error')
 
 
 cdef git_clone_options make_clone_options():
@@ -42,15 +55,19 @@ cdef class Repository:
 
     @classmethod
     def open(cls, path):
+        cdef int error
         repo = Repository()
-        git_repository_open(cython.address(repo._repository), path)
+        error = git_repository_open(cython.address(repo._repository), path)
+        check_error(error)
         assert_repository(repo)
         return repo
 
     @classmethod
     def init(cls, path, bare=False):
+        cdef int error
         repo = Repository()
-        git_repository_init(cython.address(repo._repository), path, bare)
+        error = git_repository_init(cython.address(repo._repository), path, bare)
+        check_error(error)
         assert_repository(repo)
         return repo
 
@@ -62,12 +79,7 @@ cdef class Repository:
 
         repo = Repository()
         error = git_clone(cython.address(repo._repository), url, path, &opts)
-        if error != 0:
-            err = giterr_last()
-            if err is not NULL:
-                raise RuntimeError(err.message)
-            else:
-                raise RuntimeError('Unknown error')
+        check_error(error)
         assert_repository(repo)
         return repo
 

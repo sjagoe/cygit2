@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import unittest
 
-from cygit2._cygit2 import Repository
+from cygit2._cygit2 import Repository, LibGit2Error
 
 
 class TestRepository(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestRepository(unittest.TestCase):
         shutil.rmtree(self.repo_dir)
 
     def test_repository_open_no_repo(self):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(LibGit2Error):
             repo = Repository.open(self.repo_dir)
 
     def test_repository_init(self):
