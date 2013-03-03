@@ -8,8 +8,12 @@ from _git2 cimport \
     git_config, git_config_free, \
     const_git_config_entry, git_config_get_entry, \
     \
+    git_strarray, \
+    \
     git_reference, git_reference_free, git_reference_lookup, \
-    git_reference_cmp, git_reference_has_log, \
+    git_reference_cmp, git_reference_has_log, git_reference_list, \
+    \
+    GIT_REF_LISTALL, \
     \
     git_clone, \
     \
@@ -210,6 +214,17 @@ cdef class Repository:
                                      self._repository, name)
         check_error(error)
         return ref
+
+    def list_refs(self):
+        cdef int error
+        cdef git_strarray arr
+        error = git_reference_list(cython.address(arr), self._repository,
+                                   GIT_REF_LISTALL)
+        check_error(error)
+        refs = []
+        for index in xrange(arr.count):
+            refs.append(arr.strings[index])
+        return refs
 
     property path:
         def __get__(Repository self):

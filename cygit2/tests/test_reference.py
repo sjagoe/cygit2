@@ -1,8 +1,8 @@
 import unittest
 
-from cygit2.tests.fixtures import RepositoryFixture
-
 from cygit2._cygit2 import LibGit2ReferenceError
+
+from cygit2.tests.fixtures import RepositoryFixture
 
 
 class TestReference(RepositoryFixture):
