@@ -1452,6 +1452,8 @@ cdef extern from "git2.h":
         char *value
         unsigned int level
 
+    ctypedef git_config_entry const_git_config_entry "const git_config_entry"
+
     ctypedef int (*git_config_foreach_cb)(git_config_entry *, void *)
 
     cdef struct git_config_backend:

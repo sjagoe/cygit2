@@ -1,2 +1,4 @@
 *~
 *.pyc
+/cygit2/_cygit2.so
+/build
