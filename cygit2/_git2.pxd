@@ -47,6 +47,8 @@ cdef extern from "git2.h":
         char *message
         int klass
 
+    ctypedef git_error const_git_error "const git_error"
+
     cdef enum git_error_t:
         GITERR_NOMEMORY
         GITERR_OS
