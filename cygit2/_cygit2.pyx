@@ -9,7 +9,7 @@ from _git2 cimport \
     const_git_config_entry, git_config_get_entry, \
     \
     git_reference, git_reference_free, git_reference_lookup, \
-    git_reference_cmp, \
+    git_reference_cmp, git_reference_has_log, \
     \
     git_clone, \
     \
@@ -139,6 +139,16 @@ cdef class Reference:
 
     def __cmp__(Reference self, Reference other):
         return git_reference_cmp(self._reference, other._reference)
+
+    def has_log(Reference self):
+        cdef int code
+        code = git_reference_has_log(self._reference)
+        if code == 0:
+            return False
+        elif code == 1:
+            return True
+        else:
+            check_error(code)
 
 
 cdef class Repository:
