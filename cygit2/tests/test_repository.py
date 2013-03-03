@@ -29,10 +29,11 @@ class TestRepository(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.repo_dir, 'config')))
 
     def test_repository_clone(self):
-        source_repo_dir = os.path.join(self.repo_dir, 'source')
+        source_repo_dir = os.path.abspath(os.path.join(self.repo_dir, 'source'))
         source_repo = Repository.init(source_repo_dir, True)
+        self.assertEqual(source_repo.path, source_repo_dir + '/')
         dest_repo_dir = os.path.join(self.repo_dir, 'dest')
-        dest = Repository.clone(dest_repo_dir, source_repo_dir)
+        dest = Repository.clone(source_repo_dir, dest_repo_dir)
         self.assertEqual(dest.path, os.path.join(dest_repo_dir, '.git/'))
 
 
