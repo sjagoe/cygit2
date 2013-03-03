@@ -11,6 +11,7 @@ from _git2 cimport \
     git_strarray, \
     \
     git_reference, git_reference_free, git_reference_lookup, \
+    git_reference_name, \
     git_reference_cmp, git_reference_has_log, git_reference_list, \
     git_reference_is_valid_name, git_reference_is_branch, \
     git_reference_is_packed, git_reference_is_remote, \
@@ -164,6 +165,10 @@ cdef class Reference:
 
     def is_remote(Reference self):
         return git_reference_is_remote(self._reference) != 0
+
+    property name:
+        def __get__(Reference self):
+            return git_reference_name(self._reference)
 
 
 cdef class Repository:

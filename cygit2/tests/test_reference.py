@@ -27,6 +27,9 @@ class TestReference(RepositoryFixture):
         self.assertEqual(self.ref, ref2)
         self.assertNotEqual(id(self.ref), id(ref2))
 
+    def test_name_property(self):
+        self.assertEqual(self.ref.name, 'HEAD')
+
     def test_has_log(self):
         self.assertFalse(self.ref.has_log())
 
