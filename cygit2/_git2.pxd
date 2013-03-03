@@ -47,6 +47,8 @@ cdef extern from "git2.h":
         char *message
         int klass
 
+    ctypedef git_error const_git_error "const git_error"
+
     cdef enum git_error_t:
         GITERR_NOMEMORY
         GITERR_OS
@@ -256,11 +258,6 @@ cdef extern from "git2.h":
     ctypedef git_remote_head git_remote_head
 
     cdef struct git_remote_head:
-        pass
-
-    ctypedef git_remote_callbacks git_remote_callbacks
-
-    cdef struct git_remote_callbacks:
         pass
 
     cdef struct imaxdiv_t:
@@ -1698,7 +1695,10 @@ cdef extern from "git2.h":
 
     ctypedef git_remote_completion_type git_remote_completion_type
 
-    cdef struct git_remote_callbacks:
+    cdef enum:
+        GIT_REMOTE_CALLBACKS_VERSION
+
+    ctypedef struct git_remote_callbacks:
         unsigned int version
         void (*progress)(char *, int, void *)
         int (*completion)(git_remote_completion_type, void *)
@@ -1757,6 +1757,9 @@ cdef extern from "git2.h":
 
     ctypedef void (*git_checkout_progress_cb)(char *, size_t, size_t, void *)
 
+    cdef enum:
+        GIT_CHECKOUT_OPTS_VERSION
+
     cdef struct git_checkout_opts:
         unsigned int version
         unsigned int checkout_strategy
@@ -1779,6 +1782,9 @@ cdef extern from "git2.h":
     int git_checkout_index(git_repository *repo, git_index *index, git_checkout_opts *opts)
 
     int git_checkout_tree(git_repository *repo, git_object *treeish, git_checkout_opts *opts)
+
+    ctypedef enum:
+        GIT_CLONE_OPTIONS_VERSION
 
     cdef struct git_clone_options:
         unsigned int version
