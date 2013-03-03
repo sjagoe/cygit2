@@ -91,7 +91,7 @@ cdef check_error(int error):
     cdef const_git_error* err
     if error != 0:
         err = giterr_last()
-        if err is not NULL:
+        if err is not NULL and err.klass in ERRORS:
             raise ERRORS[err.klass](err.message)
         else:
             raise LibGit2Error('Unknown error')
