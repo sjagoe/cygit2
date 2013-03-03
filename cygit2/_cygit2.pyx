@@ -8,6 +8,9 @@ from _git2 cimport \
     git_config, git_config_free, \
     const_git_config_entry, git_config_get_entry, \
     \
+    git_reference, git_reference_free, git_reference_lookup, \
+    git_reference_cmp, \
+    \
     git_clone, \
     \
     const_git_error, giterr_last, \
@@ -123,6 +126,21 @@ cdef class Config:
         return level, value
 
 
+cdef class Reference:
+
+    cdef git_reference* _reference
+
+    def __cinit__(Reference self):
+        self._reference = NULL
+
+    def __dealloc__(Reference self):
+        if self._reference is not NULL:
+            git_reference_free(self._reference)
+
+    def __cmp__(Reference self, Reference other):
+        return git_reference_cmp(self._reference, other._reference)
+
+
 cdef class Repository:
 
     cdef git_repository* _repository
@@ -174,6 +192,14 @@ cdef class Repository:
                                       self._repository)
         check_error(error)
         return conf
+
+    def lookup_ref(self, name):
+        cdef int error
+        ref = Reference()
+        error = git_reference_lookup(cython.address(ref._reference),
+                                     self._repository, name)
+        check_error(error)
+        return ref
 
     property path:
         def __get__(Repository self):
