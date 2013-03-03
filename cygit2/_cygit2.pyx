@@ -1,11 +1,15 @@
 import cython
 
 from _git2 cimport \
+    \
     git_repository, git_repository_open, git_repository_path, \
     git_repository_init, git_repository_free, git_repository_config, \
+    \
     git_config, git_config_free, \
     const_git_config_entry, git_config_get_entry, \
+    \
     git_clone, \
+    \
     const_git_error, giterr_last, \
     GITERR_NOMEMORY, \
     GITERR_OS, \
@@ -101,6 +105,9 @@ cdef class Config:
 
     cdef git_config* _config
 
+    def __cinit__(Config self):
+        self._config = NULL
+
     def __dealloc__(Config self):
         if self._config is not NULL:
             git_config_free(self._config)
@@ -119,6 +126,9 @@ cdef class Config:
 cdef class Repository:
 
     cdef git_repository* _repository
+
+    def __cinit__(Repository self):
+        self._repository = NULL
 
     def __dealloc__(Repository self):
         if self._repository is not NULL:
