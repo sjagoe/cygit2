@@ -151,7 +151,7 @@ cdef class GitOid:
             py_hex_str = hex_str[:40]
         finally:
             stdlib.free(hex_str)
-        return py_hex_str
+        return py_hex_str.decode('ascii')
 
 
 cdef class Reference:
