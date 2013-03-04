@@ -15,7 +15,7 @@ from _git2 cimport \
     const_git_oid, git_oid_fmt, \
     \
     git_reference, git_reference_free, git_reference_lookup, \
-    git_reference_name, git_reference_target, \
+    git_reference_name, git_reference_target, git_reference_reload, \
     git_reference_cmp, git_reference_has_log, git_reference_list, \
     git_reference_is_valid_name, git_reference_is_branch, \
     git_reference_is_packed, git_reference_is_remote, \
@@ -220,6 +220,13 @@ cdef class Reference:
 
     def __cmp__(Reference self, Reference other):
         return git_reference_cmp(self._reference, other._reference)
+
+    def reload(Reference self):
+        cdef int error
+        error = git_reference_reload(self._reference)
+        if error != 0:
+            self._reference = NULL
+        check_error(error)
 
     def has_log(Reference self):
         cdef int code

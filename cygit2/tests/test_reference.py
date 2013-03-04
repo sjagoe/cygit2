@@ -56,6 +56,11 @@ class TestReference(Cygit2RepositoryFixture):
         ref = self.repo.lookup_ref('refs/heads/master')
         oid = ref.oid
 
+    def test_reload(self):
+        ref = self.repo.lookup_ref('refs/heads/master')
+        ref.reload()
+        self.assertFalse(ref.has_log())
+
     def test_reflog(self):
         copy_dir = tempfile.mkdtemp(suffix='-tmp', prefix='cygit2-')
         try:
