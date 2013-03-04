@@ -19,8 +19,11 @@ from _git2 cimport \
     git_reference_cmp, git_reference_has_log, git_reference_list, \
     git_reference_is_valid_name, git_reference_is_branch, \
     git_reference_is_packed, git_reference_is_remote, \
-    \
     GIT_REF_LISTALL, \
+    \
+    git_reflog, git_reflog_free, git_reflog_read, git_reflog_entrycount, \
+    const_git_reflog_entry, git_reflog_entry_byindex, git_reflog_entry_id_new, \
+    git_reflog_entry_id_old, git_reflog_entry_message, \
     \
     git_clone, \
     \
@@ -141,8 +144,13 @@ cdef class GitOid:
 
     cdef const_git_oid *_oid
 
+    cdef object _reference
+
     def __cinit__(GitOid self):
         self._oid = NULL
+
+    def __init__(GitOid self, reference):
+        self._reference = reference
 
     def format(GitOid self):
         cdef char *hex_str = <char*>stdlib.malloc(sizeof(char)*40)
@@ -152,6 +160,51 @@ cdef class GitOid:
         finally:
             stdlib.free(hex_str)
         return py_hex_str.decode('ascii')
+
+
+cdef class RefLogEntry:
+
+    cdef const_git_reflog_entry *_entry
+
+    cdef object _reference
+
+    def __cinit__(RefLogEntry self):
+        self._entry = NULL
+
+    def __init__(RefLogEntry self, reference):
+        self._reference = reference
+
+    property id_new:
+        def __get__(RefLogEntry self):
+            cdef const_git_oid *oidp
+
+            oidp = git_reflog_entry_id_new(self._entry)
+            if oidp is NULL:
+                return None
+
+            oid = GitOid(self)
+            oid._oid = oidp
+
+            return oid
+
+    property id_old:
+        def __get__(RefLogEntry self):
+            cdef const_git_oid *oidp
+
+            oidp = git_reflog_entry_id_old(self._entry)
+            if oidp is NULL:
+                return None
+
+            oid = GitOid(self)
+            oid._oid = oidp
+
+            return oid
+
+    property message:
+        def __get__(RefLogEntry self):
+            cdef char *message
+            message = git_reflog_entry_message(self._entry)
+            return message.decode('utf-8')
 
 
 cdef class Reference:
@@ -178,6 +231,23 @@ cdef class Reference:
         else:
             check_error(code)
 
+    def logs(Reference self):
+        cdef int i
+        cdef int size
+        cdef int error
+        cdef git_reflog *reflog
+        error = git_reflog_read(cython.address(reflog), self._reference)
+        check_error(error)
+        i = 0
+        size = git_reflog_entrycount(reflog)
+        try:
+            while i < size:
+                entry = RefLogEntry(self)
+                entry._entry = git_reflog_entry_byindex(reflog, i)
+                yield entry
+        finally:
+            git_reflog_free(reflog)
+
     def is_branch(Reference self):
         return git_reference_is_branch(self._reference) != 0
 
@@ -197,7 +267,7 @@ cdef class Reference:
             oidp = git_reference_target(self._reference)
             if oidp is NULL:
                 return None
-            oid = GitOid()
+            oid = GitOid(self)
             oid._oid = oidp
             return oid
 

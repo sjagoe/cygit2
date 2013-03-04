@@ -182,10 +182,12 @@ cdef extern from "git2.h":
     cdef struct git_config_backend:
         pass
 
-    ctypedef git_reflog_entry git_reflog_entry
-
     cdef struct git_reflog_entry:
         pass
+
+    ctypedef git_reflog_entry git_reflog_entry
+
+    ctypedef git_reflog_entry const_git_reflog_entry "const git_reflog_entry"
 
     ctypedef git_reflog git_reflog
 
