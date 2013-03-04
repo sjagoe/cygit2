@@ -1,3 +1,6 @@
+import os
+import shutil
+import tempfile
 import unittest
 
 from cygit2._cygit2 import Repository, LibGit2ReferenceError
@@ -54,10 +57,18 @@ class TestReference(Cygit2RepositoryFixture):
         oid = ref.oid
 
     def test_reflog(self):
-        # I probably should test on this repository itself ...
-        repo = Repository.open('.')
-        ref = repo.lookup_ref('refs/heads/master')
-        self.assertGreater(len(list(ref.logs())), 30)
+        copy_dir = tempfile.mkdtemp(suffix='-tmp', prefix='cygit2-')
+        try:
+            repo_dir = os.path.join(copy_dir, 'repo')
+            shutil.copytree('.', repo_dir)
+            repo = Repository.open(repo_dir)
+            try:
+                ref = repo.lookup_ref('refs/heads/master')
+                self.assertGreater(len(list(ref.logs())), 30)
+            finally:
+                repo.close()
+        finally:
+            shutil.rmtree(copy_dir)
 
 
 if __name__ == '__main__':
