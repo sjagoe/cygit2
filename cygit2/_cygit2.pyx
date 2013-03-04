@@ -106,7 +106,7 @@ cdef assert_repository(Repository repo):
 
 
 cdef check_error(int error):
-    cdef const_git_error* err
+    cdef const_git_error *err
     if error != 0:
         err = giterr_last()
         if err is not NULL and err.klass in ERRORS:
@@ -117,7 +117,7 @@ cdef check_error(int error):
 
 cdef class Config:
 
-    cdef git_config* _config
+    cdef git_config *_config
 
     def __cinit__(Config self):
         self._config = NULL
@@ -128,7 +128,7 @@ cdef class Config:
 
     def get_entry(self, name):
         cdef int error
-        cdef const_git_config_entry* entry
+        cdef const_git_config_entry *entry
         error = git_config_get_entry(
             cython.address(entry), self._config, name)
         check_error(error)
@@ -139,13 +139,13 @@ cdef class Config:
 
 cdef class GitOid:
 
-    cdef const_git_oid* _oid
+    cdef const_git_oid *_oid
 
     def __cinit__(GitOid self):
         self._oid = NULL
 
     def format(GitOid self):
-        cdef char* hex_str = <char*>stdlib.malloc(sizeof(char)*40)
+        cdef char *hex_str = <char*>stdlib.malloc(sizeof(char)*40)
         git_oid_fmt(hex_str, self._oid)
         try:
             py_hex_str = hex_str[:40]
@@ -156,7 +156,7 @@ cdef class GitOid:
 
 cdef class Reference:
 
-    cdef git_reference* _reference
+    cdef git_reference *_reference
 
     def __cinit__(Reference self):
         self._reference = NULL
@@ -193,7 +193,7 @@ cdef class Reference:
 
     property oid:
         def __get__(Reference self):
-            cdef const_git_oid* oidp
+            cdef const_git_oid *oidp
             oidp = git_reference_target(self._reference)
             if oidp is NULL:
                 return None
@@ -204,7 +204,7 @@ cdef class Reference:
 
 cdef class Repository:
 
-    cdef git_repository* _repository
+    cdef git_repository *_repository
 
     def __cinit__(Repository self):
         self._repository = NULL
