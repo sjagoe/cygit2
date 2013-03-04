@@ -10,7 +10,7 @@ from _git2 cimport \
     git_config, git_config_free, \
     const_git_config_entry, git_config_get_entry, \
     \
-    git_strarray, \
+    git_strarray, git_strarray_free, \
     \
     const_git_oid, git_oid_fmt, \
     \
@@ -271,10 +271,10 @@ cdef class Repository:
         error = git_reference_list(cython.address(arr), self._repository,
                                    GIT_REF_LISTALL)
         check_error(error)
-        refs = []
-        for index in xrange(arr.count):
-            refs.append(arr.strings[index])
-        return refs
+        try:
+            return tuple(arr.strings[index] for index in xrange(arr.count))
+        finally:
+            git_strarray_free(cython.address(arr))
 
     property path:
         def __get__(Repository self):

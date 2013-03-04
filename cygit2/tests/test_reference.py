@@ -2,18 +2,18 @@ import unittest
 
 from cygit2._cygit2 import LibGit2ReferenceError
 
-from cygit2.tests.fixtures import RepositoryFixture
+from cygit2.tests.fixtures import RepositoryFixture, Cygit2RepositoryFixture
 
 
-class TestReference(RepositoryFixture):
+class TestReferenceEmptyRepository(RepositoryFixture):
 
     def setUp(self):
-        super(TestReference, self).setUp()
+        super(TestReferenceEmptyRepository, self).setUp()
         self.ref = self.empty_repo.lookup_ref('HEAD')
 
     def tearDown(self):
         del self.ref
-        super(TestReference, self).tearDown()
+        super(TestReferenceEmptyRepository, self).tearDown()
 
     def test_get_invalid_reference(self):
         with self.assertRaises(LibGit2ReferenceError):
@@ -45,6 +45,13 @@ class TestReference(RepositoryFixture):
     def test_oid_property_no_ref(self):
         oid = self.ref.oid
         self.assertIsNone(oid)
+
+
+class TestReference(Cygit2RepositoryFixture):
+
+    def test_oid_property(self):
+        ref = self.repo.lookup_ref('refs/heads/master')
+        oid = ref.oid
 
 
 if __name__ == '__main__':

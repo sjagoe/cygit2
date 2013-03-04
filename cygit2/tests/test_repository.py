@@ -5,19 +5,19 @@ import unittest
 
 from cygit2._cygit2 import Repository, LibGit2RepositoryError
 
-from cygit2.tests.fixtures import RepositoryFixture
+from cygit2.tests.fixtures import RepositoryFixture, Cygit2RepositoryFixture
 
 
-class TestRepository(RepositoryFixture):
+class TestEmptyRepository(RepositoryFixture):
 
     def setUp(self):
-        super(TestRepository, self).setUp()
+        super(TestEmptyRepository, self).setUp()
         self.empty_dir = tempfile.mkdtemp(
             suffix='-tmp', prefix='cygit2-')
 
     def tearDown(self):
         shutil.rmtree(self.empty_dir)
-        super(TestRepository, self).tearDown()
+        super(TestEmptyRepository, self).tearDown()
 
     def test_repository_open_no_repo(self):
         with self.assertRaises(LibGit2RepositoryError):
@@ -44,7 +44,15 @@ class TestRepository(RepositoryFixture):
         ref = self.empty_repo.lookup_ref('HEAD')
 
     def test_list_refs(self):
-        self.assertEqual(self.empty_repo.list_refs(), [])
+        self.assertEqual(self.empty_repo.list_refs(), ())
+
+
+class TestRepositoryWithContents(Cygit2RepositoryFixture):
+
+    def test_list_refs(self):
+        self.assertIn('refs/heads/master', self.repo.list_refs())
+        self.assertIn('refs/remotes/origin/master', self.repo.list_refs())
+
 
 
 if __name__ == '__main__':
