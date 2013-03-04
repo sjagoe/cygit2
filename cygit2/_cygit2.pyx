@@ -1,4 +1,4 @@
-cimport stdlib
+from libc cimport stdlib
 
 import cython
 
@@ -135,7 +135,7 @@ cdef class Config:
         error = git_config_get_entry(
             cython.address(entry), self._config, name)
         check_error(error)
-        value = entry.value
+        value = <char*>entry.value
         level = entry.level
         return level, value
 
@@ -203,7 +203,7 @@ cdef class RefLogEntry:
     property message:
         def __get__(RefLogEntry self):
             cdef char *message
-            message = git_reflog_entry_message(self._entry)
+            message = <char*>git_reflog_entry_message(self._entry)
             return message.decode('utf-8')
 
 
