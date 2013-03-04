@@ -1,6 +1,6 @@
 import unittest
 
-from cygit2._cygit2 import LibGit2ReferenceError
+from cygit2._cygit2 import Repository, LibGit2ReferenceError
 
 from cygit2.tests.fixtures import RepositoryFixture, Cygit2RepositoryFixture
 
@@ -52,6 +52,12 @@ class TestReference(Cygit2RepositoryFixture):
     def test_oid_property(self):
         ref = self.repo.lookup_ref('refs/heads/master')
         oid = ref.oid
+
+    def test_reflog(self):
+        # I probably should test on this repository itself ...
+        repo = Repository.open('.')
+        ref = repo.lookup_ref('refs/heads/master')
+        self.assertGreater(len(list(ref.logs())), 30)
 
 
 if __name__ == '__main__':

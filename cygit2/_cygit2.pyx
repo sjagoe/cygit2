@@ -244,6 +244,7 @@ cdef class Reference:
             while i < size:
                 entry = RefLogEntry(self)
                 entry._entry = git_reflog_entry_byindex(reflog, i)
+                i += 1
                 yield entry
         finally:
             git_reflog_free(reflog)
