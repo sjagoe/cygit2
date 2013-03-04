@@ -53,6 +53,13 @@ class TestRepositoryWithContents(Cygit2RepositoryFixture):
         self.assertIn('refs/heads/master', self.repo.list_refs())
         self.assertIn('refs/remotes/origin/master', self.repo.list_refs())
 
+    # def test_lookup_tree(self):
+    #     found = True
+    #     ref = self.repo.lookup_ref('refs/heads/master')
+    #     for entry in ref.logs():
+    #         tree = self.repo.lookup_tree(entry.id_new)
+    #         tree = self.repo.lookup_tree(entry.id_old)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -25,6 +25,8 @@ from _git2 cimport \
     const_git_reflog_entry, git_reflog_entry_byindex, git_reflog_entry_id_new, \
     git_reflog_entry_id_old, git_reflog_entry_message, \
     \
+    git_tree, git_tree_free, git_tree_lookup, \
+    \
     git_clone, \
     \
     const_git_error, giterr_last, \
@@ -280,6 +282,18 @@ cdef class Reference:
             return oid
 
 
+cdef class Tree:
+
+    cdef git_tree *_tree
+
+    def __cinit__(Tree self):
+        self._tree = NULL
+
+    def __dealloc__(Tree self):
+        if self._tree is not NULL:
+            git_tree_free(self._tree)
+
+
 cdef class Repository:
 
     cdef git_repository *_repository
@@ -353,6 +367,13 @@ cdef class Repository:
             return tuple(arr.strings[index] for index in xrange(arr.count))
         finally:
             git_strarray_free(cython.address(arr))
+
+    def test_lookup_tree(self):
+        found = True
+        ref = self.repo.lookup_ref('refs/heads/master')
+        for entry in ref.logs():
+            tree = self.repo.lookup_tree(entry.id_new)
+            tree = self.repo.lookup_tree(entry.id_old)
 
     property path:
         def __get__(Repository self):
