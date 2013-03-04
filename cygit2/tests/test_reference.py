@@ -59,21 +59,11 @@ class TestReference(Cygit2RepositoryFixture):
     def test_reload(self):
         ref = self.repo.lookup_ref('refs/heads/master')
         ref.reload()
-        self.assertFalse(ref.has_log())
+        self.assertTrue(ref.has_log())
 
     def test_reflog(self):
-        copy_dir = tempfile.mkdtemp(suffix='-tmp', prefix='cygit2-')
-        try:
-            repo_dir = os.path.join(copy_dir, 'repo')
-            shutil.copytree('.', repo_dir)
-            repo = Repository.open(repo_dir)
-            try:
-                ref = repo.lookup_ref('refs/heads/master')
-                self.assertGreater(len(list(ref.logs())), 30)
-            finally:
-                repo.close()
-        finally:
-            shutil.rmtree(copy_dir)
+        ref = self.repo.lookup_ref('refs/heads/master')
+        self.assertGreater(len(list(ref.logs())), 30)
 
 
 if __name__ == '__main__':

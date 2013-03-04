@@ -144,13 +144,13 @@ cdef class GitOid:
 
     cdef const_git_oid *_oid
 
-    cdef object _reference
+    cdef object _owner
 
     def __cinit__(GitOid self):
         self._oid = NULL
 
-    def __init__(GitOid self, reference):
-        self._reference = reference
+    def __init__(GitOid self, owner):
+        self._owner = owner
 
     def format(GitOid self):
         cdef char *hex_str = <char*>stdlib.malloc(sizeof(char)*40)
@@ -291,7 +291,7 @@ cdef class Repository:
         if self._repository is not NULL:
             git_repository_free(self._repository)
 
-    def close(self):
+    def close(Repository self):
         if self._repository is not NULL:
             git_repository_free(self._repository)
             self._repository = NULL
@@ -323,7 +323,7 @@ cdef class Repository:
         assert_repository(repo)
         return repo
 
-    def config(self):
+    def config(Repository self):
         cdef int error
         assert_repository(self)
         conf = Config()
@@ -332,7 +332,7 @@ cdef class Repository:
         check_error(error)
         return conf
 
-    def lookup_ref(self, name):
+    def lookup_ref(Repository self, name):
         if git_reference_is_valid_name(name) == 0:
             raise LibGit2ReferenceError('Invalid reference name {!r}'.format(
                 name))
@@ -343,7 +343,7 @@ cdef class Repository:
         check_error(error)
         return ref
 
-    def list_refs(self):
+    def list_refs(Repository self):
         cdef int error
         cdef git_strarray arr
         error = git_reference_list(cython.address(arr), self._repository,

@@ -20,13 +20,11 @@ class RepositoryFixture(unittest.TestCase):
 class Cygit2RepositoryFixture(unittest.TestCase):
 
     def setUp(self):
-        source_dir = os.path.dirname(os.path.abspath(__file__))
-        while not os.path.isdir(os.path.join(source_dir, '.git')):
-            source_dir = os.path.dirname(source_dir)
-        self._repo_dir = tempfile.mkdtemp(suffix='-tmp', prefix='cygit2-')
-        self.repo_path = os.path.join(self._repo_dir, 'cygit2')
-        self.repo = Repository.clone(source_dir, self.repo_path)
+        self.copy_dir = tempfile.mkdtemp(suffix='-tmp', prefix='cygit2-')
+        repo_dir = os.path.join(self.copy_dir, 'repo')
+        shutil.copytree('.', repo_dir)
+        self.repo = Repository.open(repo_dir)
 
     def tearDown(self):
         self.repo.close()
-        shutil.rmtree(self._repo_dir)
+        shutil.rmtree(self.copy_dir)

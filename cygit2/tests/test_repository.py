@@ -54,6 +54,5 @@ class TestRepositoryWithContents(Cygit2RepositoryFixture):
         self.assertIn('refs/remotes/origin/master', self.repo.list_refs())
 
 
-
 if __name__ == '__main__':
     unittest.main()
