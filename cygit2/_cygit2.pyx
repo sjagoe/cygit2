@@ -256,7 +256,7 @@ cdef class Repository:
 
     def lookup_ref(self, name):
         if git_reference_is_valid_name(name) == 0:
-            raise LibGit2ReferenceError('Invalid reference name {}'.format(
+            raise LibGit2ReferenceError('Invalid reference name {!r}'.format(
                 name))
         cdef int error
         ref = Reference()
