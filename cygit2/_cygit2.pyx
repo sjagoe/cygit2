@@ -1,3 +1,5 @@
+cimport stdlib
+
 import cython
 
 from _git2 cimport \
@@ -10,8 +12,10 @@ from _git2 cimport \
     \
     git_strarray, \
     \
+    const_git_oid, git_oid_fmt, \
+    \
     git_reference, git_reference_free, git_reference_lookup, \
-    git_reference_name, \
+    git_reference_name, git_reference_target, \
     git_reference_cmp, git_reference_has_log, git_reference_list, \
     git_reference_is_valid_name, git_reference_is_branch, \
     git_reference_is_packed, git_reference_is_remote, \
@@ -133,6 +137,23 @@ cdef class Config:
         return level, value
 
 
+cdef class GitOid:
+
+    cdef const_git_oid* _oid
+
+    def __cinit__(GitOid self):
+        self._oid = NULL
+
+    def format(GitOid self):
+        cdef char* hex_str = <char*>stdlib.malloc(sizeof(char)*40)
+        git_oid_fmt(hex_str, self._oid)
+        try:
+            py_hex_str = hex_str[:40]
+        finally:
+            stdlib.free(hex_str)
+        return py_hex_str
+
+
 cdef class Reference:
 
     cdef git_reference* _reference
@@ -169,6 +190,16 @@ cdef class Reference:
     property name:
         def __get__(Reference self):
             return git_reference_name(self._reference)
+
+    property oid:
+        def __get__(Reference self):
+            cdef const_git_oid* oidp
+            oidp = git_reference_target(self._reference)
+            if oidp is NULL:
+                return None
+            oid = GitOid()
+            oid._oid = oidp
+            return oid
 
 
 cdef class Repository:

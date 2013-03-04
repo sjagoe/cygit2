@@ -42,6 +42,10 @@ class TestReference(RepositoryFixture):
     def test_is_remote_empty_repo(self):
         self.assertFalse(self.ref.is_remote())
 
+    def test_oid_property_no_ref(self):
+        oid = self.ref.oid
+        self.assertIsNone(oid)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -566,6 +566,8 @@ cdef extern from "git2.h":
 
     ctypedef git_oid git_oid
 
+    ctypedef git_oid const_git_oid "const git_oid"
+
     int git_oid_fromstr(git_oid *out, char *str)
 
     int git_oid_fromstrn(git_oid *out, char *str, size_t length)
