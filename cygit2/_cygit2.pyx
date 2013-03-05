@@ -2,6 +2,8 @@ from libc cimport stdlib
 
 import cython
 
+from _types cimport const_char_ptr
+
 from _git2 cimport \
     \
     git_repository, git_repository_open, git_repository_path, \
@@ -24,6 +26,8 @@ from _git2 cimport \
     git_reflog, git_reflog_free, git_reflog_read, git_reflog_entrycount, \
     const_git_reflog_entry, git_reflog_entry_byindex, git_reflog_entry_id_new, \
     git_reflog_entry_id_old, git_reflog_entry_message, \
+    \
+    GIT_OK, git_status_foreach, \
     \
     git_clone, \
     \
@@ -110,7 +114,7 @@ cdef assert_repository(Repository repo):
 
 cdef check_error(int error):
     cdef const_git_error *err
-    if error != 0:
+    if error != GIT_OK:
         err = giterr_last()
         if err is not NULL and err.klass in ERRORS:
             raise ERRORS[err.klass](err.message)
@@ -224,7 +228,7 @@ cdef class Reference:
     def reload(Reference self):
         cdef int error
         error = git_reference_reload(self._reference)
-        if error != 0:
+        if error != GIT_OK:
             self._reference = NULL
         check_error(error)
 
@@ -354,6 +358,17 @@ cdef class Repository:
         finally:
             git_strarray_free(cython.address(arr))
 
+    def status(Repository self):
+        cdef int error
+        error = git_status_foreach(self._repository, _status_foreach_cb, NULL)
+        check_error(error)
+        return None
+
     property path:
         def __get__(Repository self):
             return git_repository_path(self._repository)
+
+cdef int _status_foreach_cb(const_char_ptr path,
+                            unsigned int flags, void *payload):
+    print <char*>path
+    return GIT_OK
