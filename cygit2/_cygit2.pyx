@@ -360,15 +360,20 @@ cdef class Repository:
 
     def status(Repository self):
         cdef int error
-        error = git_status_foreach(self._repository, _status_foreach_cb, NULL)
+        result = {}
+        error = git_status_foreach(self._repository, _status_foreach_cb,
+                                   <void*>result)
         check_error(error)
-        return None
+        return result
 
     property path:
         def __get__(Repository self):
             return git_repository_path(self._repository)
 
+
 cdef int _status_foreach_cb(const_char_ptr path,
                             unsigned int flags, void *payload):
-    print <char*>path
+    result = <object>payload
+    py_path = <char*>path
+    result[py_path] = flags
     return GIT_OK

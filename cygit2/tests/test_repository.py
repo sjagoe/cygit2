@@ -58,7 +58,8 @@ class TestRepositoryWithContents(Cygit2RepositoryFixture):
         self.assertIn('refs/remotes/origin/master', self.repo.list_refs())
 
     def test_status(self):
-        self.repo.status()
+        stats = self.repo.status()
+        self.fail('Incomplete test')
 
 
 if __name__ == '__main__':
