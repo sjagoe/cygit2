@@ -1901,7 +1901,7 @@ cdef extern from "git2.h":
 
     ctypedef int (*git_headlist_cb)(git_remote_head *, void *)
 
-    cdef enum git_status_t:
+    cdef enum __git_status_t:
         GIT_STATUS_CURRENT
         GIT_STATUS_INDEX_NEW
         GIT_STATUS_INDEX_MODIFIED
@@ -1913,6 +1913,8 @@ cdef extern from "git2.h":
         GIT_STATUS_WT_DELETED
         GIT_STATUS_WT_TYPECHANGE
         GIT_STATUS_IGNORED
+
+    ctypedef __git_status_t git_status_t
 
     ctypedef int (*git_status_cb)(char *, unsigned int, void *)
 
