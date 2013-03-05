@@ -63,7 +63,7 @@ class TestReference(Cygit2RepositoryFixture):
 
     def test_reflog(self):
         ref = self.repo.lookup_ref('refs/heads/master')
-        self.assertGreater(len(list(ref.logs())), 30)
+        self.assertGreater(len(list(ref.logs())), 0)
 
 
 if __name__ == '__main__':
