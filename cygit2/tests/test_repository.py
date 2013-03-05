@@ -25,19 +25,23 @@ class TestEmptyRepository(RepositoryFixture):
 
     def test_repository_init(self):
         repo = Repository.init(self.empty_dir)
-        self.assertEqual(repo.path, os.path.join(self.empty_dir, '.git/'))
+        self.assertEqual(os.path.abspath(repo.path),
+                         os.path.abspath(os.path.join(self.empty_dir, '.git')))
 
     def test_repository_init_bare(self):
-        self.assertEqual(self.empty_repo.path, self.repo_dir + '/')
+        self.assertEqual(os.path.abspath(self.empty_repo.path),
+                         os.path.abspath(self.repo_dir))
         self.assertTrue(os.path.exists(os.path.join(self.repo_dir, 'config')))
 
     def test_repository_clone(self):
         source_repo_dir = os.path.abspath(os.path.join(self.empty_dir, 'source'))
         source_repo = Repository.init(source_repo_dir, True)
-        self.assertEqual(source_repo.path, source_repo_dir + '/')
+        self.assertEqual(os.path.abspath(source_repo.path),
+                         os.path.abspath(source_repo_dir))
         dest_repo_dir = os.path.join(self.empty_dir, 'dest')
         dest = Repository.clone(source_repo_dir, dest_repo_dir)
-        self.assertEqual(dest.path, os.path.join(dest_repo_dir, '.git/'))
+        self.assertEqual(os.path.abspath(dest.path),
+                         os.path.abspath(os.path.join(dest_repo_dir, '.git')))
 
     def test_lookup_ref(self):
         # This should raise if there is an error...
