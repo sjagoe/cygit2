@@ -56,7 +56,7 @@ class TestEmptyRepository(RepositoryFixture):
         with open(os.path.join(self.empty_dir, 'file'), 'wb') as fh:
             fh.write('contents')
         self.assertEqual(repo.status(),
-                         {'file': GitStatus('file', GitStatus.WT_NEW)})
+                         {'file': GitStatus(GitStatus.WT_NEW)})
 
 
 class TestRepositoryWithContents(Cygit2RepositoryFixture):

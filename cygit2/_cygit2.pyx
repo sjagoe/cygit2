@@ -30,6 +30,7 @@ from _git2 cimport \
     GIT_OK, \
     \
     git_status_t, git_status_foreach, \
+    \
     GIT_STATUS_CURRENT, \
     GIT_STATUS_INDEX_NEW, \
     GIT_STATUS_INDEX_MODIFIED, \
@@ -384,114 +385,212 @@ cdef class Repository:
             return git_repository_path(self._repository)
 
 
+cdef class EnumValue:
+
+    cdef object _name
+    cdef int _value
+
+    def __init__(self, name, value):
+        self._name = name
+        self._value = value
+
+    def __repr__(EnumValue self):
+        return self.name
+
+    def __or__(EnumValue self, EnumValue other):
+        return CompositeEnumValue(self, other)
+
+    def __ror__(EnumValue self, EnumValue other):
+        return CompositeEnumValue(other, self)
+
+    def __and__(EnumValue self, EnumValue other):
+        return CompositeEnumValue(self) & CompositeEnumValue(other)
+
+    def __rand__(EnumValue self, EnumValue other):
+        return CompositeEnumValue(other) & CompositeEnumValue(self)
+
+    def __richcmp__(EnumValue self, EnumValue other not None, int op):
+        if op == 2: # ==
+            return self.value == other.value
+        elif op == 3: # !=
+            return self.value != other.value
+        elif op == 0: # <
+            return self.value < other.value
+        elif op == 1: # <= (not >)
+            return not (self.value > other.value)
+        elif op == 4: # >
+            return self.value > other.value
+        elif op == 5: # >= (not <)
+            return not (self.value < other.value)
+
+    def __hash__(EnumValue self):
+        return hash((self.name, self.value))
+
+    property name:
+        def __get__(EnumValue self):
+            return self._name
+
+    property value:
+        def __get__(EnumValue self):
+            return self._value
+
+
+cdef class CompositeEnumValue(EnumValue):
+
+    cdef tuple _items
+
+    def __init__(CompositeEnumValue self, *items):
+        flatten = []
+        for item in items:
+            if isinstance(item, CompositeEnumValue):
+                flatten.extend(item.items)
+            elif isinstance(item, EnumValue):
+                flatten.append(item)
+        self._items = tuple(sorted(flatten))
+
+    def __and__(CompositeEnumValue self, EnumValue other):
+        _other = set(CompositeEnumValue(other).items)
+        this = set(self.items)
+        return CompositeEnumValue(*sorted(this & _other))
+
+    property name:
+        def __get__(CompositeEnumValue self):
+            return ' | '.join([v.name for v in self._items])
+
+    property value:
+        def __get__(CompositeEnumValue self):
+            value = 0
+            for i in self.items:
+                value |= i.value
+            return value
+
+    property items:
+        def __get__(CompositeEnumValue self):
+            return self._items
+
+
+cdef EnumValue _GitStatus_from_uint(unsigned int flags):
+    if flags == GitStatus.CURRENT.value:
+        return GitStatus.CURRENT
+    value = None
+    for item in (GitStatus.INDEX_NEW,
+                 GitStatus.INDEX_MODIFIED,
+                 GitStatus.INDEX_DELETED,
+                 GitStatus.INDEX_RENAMED,
+                 GitStatus.INDEX_TYPECHANGE,
+                 GitStatus.WT_NEW,
+                 GitStatus.WT_MODIFIED,
+                 GitStatus.WT_DELETED,
+                 GitStatus.WT_TYPECHANGE,
+                 GitStatus.IGNORED):
+        if value is None and (flags & item.value) == item.value:
+            value = item
+        elif (flags & item.value) == item.value:
+            value |= item
+    if item is None:
+        # FIXME
+        return GitStatus.CURRENT
+    return value
+
+
 cdef class GitStatus:
 
-    CURRENT          = GIT_STATUS_CURRENT
-    INDEX_NEW        = GIT_STATUS_INDEX_NEW
-    INDEX_MODIFIED   = GIT_STATUS_INDEX_MODIFIED
-    INDEX_DELETED    = GIT_STATUS_INDEX_DELETED
-    INDEX_RENAMED    = GIT_STATUS_INDEX_RENAMED
-    INDEX_TYPECHANGE = GIT_STATUS_INDEX_TYPECHANGE
-    WT_NEW           = GIT_STATUS_WT_NEW
-    WT_MODIFIED      = GIT_STATUS_WT_MODIFIED
-    WT_DELETED       = GIT_STATUS_WT_DELETED
-    WT_TYPECHANGE    = GIT_STATUS_WT_TYPECHANGE
-    IGNORED          = GIT_STATUS_IGNORED
+    CURRENT          = EnumValue('GitStatus.CURRENT', GIT_STATUS_CURRENT)
+    INDEX_NEW        = EnumValue('GitStatus.INDEX_NEW', GIT_STATUS_INDEX_NEW)
+    INDEX_MODIFIED   = EnumValue('GitStatus.INDEX_MODIFIED', GIT_STATUS_INDEX_MODIFIED)
+    INDEX_DELETED    = EnumValue('GitStatus.INDEX_DELETED', GIT_STATUS_INDEX_DELETED)
+    INDEX_RENAMED    = EnumValue('GitStatus.INDEX_RENAMED', GIT_STATUS_INDEX_RENAMED)
+    INDEX_TYPECHANGE = EnumValue('GitStatus.INDEX_TYPECHANGE', GIT_STATUS_INDEX_TYPECHANGE)
+    WT_NEW           = EnumValue('GitStatus.WT_NEW', GIT_STATUS_WT_NEW)
+    WT_MODIFIED      = EnumValue('GitStatus.WT_MODIFIED', GIT_STATUS_WT_MODIFIED)
+    WT_DELETED       = EnumValue('GitStatus.WT_DELETED', GIT_STATUS_WT_DELETED)
+    WT_TYPECHANGE    = EnumValue('GitStatus.WT_TYPECHANGE', GIT_STATUS_WT_TYPECHANGE)
+    IGNORED          = EnumValue('GitStatus.IGNORED', GIT_STATUS_IGNORED)
 
-    cdef git_status_t _flags
+    cdef EnumValue _flags
 
-    cdef readonly object path
+    @classmethod
+    def _from_uint(cls, unsigned int flags):
+        return _GitStatus_from_uint(flags)
 
-    def __init__(GitStatus self, path, flags):
-        self.path = path
+    cpdef unsigned int _to_uint(GitStatus self):
+        return self._flags.value
+
+    def __init__(GitStatus self, EnumValue flags):
         self._flags = flags
 
     def __repr__(GitStatus self):
-        result = []
-        for attr in ('current',
-                     'index_new',
-                     'index_modified',
-                     'index_deleted',
-                     'index_renamed',
-                     'index_typechange',
-                     'wt_new',
-                     'wt_modified',
-                     'wt_deleted',
-                     'wt_typechange',
-                     'ignored'):
-            if getattr(self, attr):
-                result.append(attr)
-        return '<GitStatus {}>'.format('|'.join(result))
+        return 'GitStatus({!r})'.format(self._flags)
 
     def __richcmp__(GitStatus self, GitStatus other not None, int op):
         if op == 2: # ==
-            return (self.path, self._flags) == (other.path, other._flags)
+            return self._flags == other._flags
         elif op == 3: # !=
-            return (self.path, self._flags) != (other.path, other._flags)
+            return self._flags != other._flags
         elif op == 0: # <
-            return (self.path, self._flags) < (other.path, other._flags)
+            return self._flags < other._flags
         elif op == 1: # <=
-            return (self.path, self._flags) <= (other.path, other._flags)
+            return self._flags <= other._flags
         elif op == 4: # >
-            return (self.path, self._flags) > (other.path, other._flags)
+            return self._flags > other._flags
         elif op == 5: # >=
-            return (self.path, self._flags) >= (other.path, other._flags)
+            return self._flags >= other._flags
 
     property current:
         def __get__(GitStatus self):
-            return self._flags == GIT_STATUS_CURRENT
+            return self._flags == self.CURRENT
 
     property index_new:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_INDEX_NEW) == GIT_STATUS_INDEX_NEW
+            return (self._flags & self.INDEX_NEW) == self.INDEX_NEW
 
     property index_modified:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_INDEX_MODIFIED) == \
-                GIT_STATUS_INDEX_MODIFIED
+            return (self._flags & self.INDEX_MODIFIED) == \
+                self.INDEX_MODIFIED
 
     property index_deleted:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_INDEX_DELETED) == \
-                GIT_STATUS_INDEX_DELETED
+            return (self._flags & self.INDEX_DELETED) == \
+                self.INDEX_DELETED
 
     property index_renamed:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_INDEX_RENAMED) == \
-                GIT_STATUS_INDEX_RENAMED
+            return (self._flags & self.INDEX_RENAMED) == \
+                self.INDEX_RENAMED
 
     property index_typechange:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_INDEX_TYPECHANGE) == \
-                GIT_STATUS_INDEX_TYPECHANGE
+            return (self._flags & self.INDEX_TYPECHANGE) == \
+                self.INDEX_TYPECHANGE
 
     property wt_new:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_WT_NEW) == GIT_STATUS_WT_NEW
+            return (self._flags & self.WT_NEW) == self.WT_NEW
 
     property wt_modified:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_WT_MODIFIED) == \
-                GIT_STATUS_WT_MODIFIED
+            return (self._flags & self.WT_MODIFIED) == \
+                self.WT_MODIFIED
 
     property wt_deleted:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_WT_DELETED) == \
-                GIT_STATUS_WT_DELETED
+            return (self._flags & self.WT_DELETED) == \
+                self.WT_DELETED
 
     property wt_typechange:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_WT_TYPECHANGE) == \
-                GIT_STATUS_WT_TYPECHANGE
+            return (self._flags & self.WT_TYPECHANGE) == \
+                self.WT_TYPECHANGE
 
     property ignored:
         def __get__(GitStatus self):
-            return (self._flags & GIT_STATUS_IGNORED) == GIT_STATUS_IGNORED
+            return (self._flags & self.IGNORED) == self.IGNORED
 
 
 cdef int _status_foreach_cb(const_char_ptr path,
                             unsigned int flags, void *payload):
     result = <object>payload
     py_path = <char*>path
-    result[py_path] = GitStatus(py_path, flags)
+    result[py_path] = GitStatus(_GitStatus_from_uint(flags))
     return GIT_OK
