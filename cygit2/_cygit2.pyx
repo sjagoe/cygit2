@@ -387,6 +387,18 @@ cdef class Repository:
 
 cdef class GitStatus:
 
+    CURRENT          = GIT_STATUS_CURRENT
+    INDEX_NEW        = GIT_STATUS_INDEX_NEW
+    INDEX_MODIFIED   = GIT_STATUS_INDEX_MODIFIED
+    INDEX_DELETED    = GIT_STATUS_INDEX_DELETED
+    INDEX_RENAMED    = GIT_STATUS_INDEX_RENAMED
+    INDEX_TYPECHANGE = GIT_STATUS_INDEX_TYPECHANGE
+    WT_NEW           = GIT_STATUS_WT_NEW
+    WT_MODIFIED      = GIT_STATUS_WT_MODIFIED
+    WT_DELETED       = GIT_STATUS_WT_DELETED
+    WT_TYPECHANGE    = GIT_STATUS_WT_TYPECHANGE
+    IGNORED          = GIT_STATUS_IGNORED
+
     cdef git_status_t _flags
 
     cdef readonly object path
@@ -411,6 +423,20 @@ cdef class GitStatus:
             if getattr(self, attr):
                 result.append(attr)
         return '<GitStatus {}>'.format('|'.join(result))
+
+    def __richcmp__(GitStatus self, GitStatus other not None, int op):
+        if op == 2: # ==
+            return (self.path, self._flags) == (other.path, other._flags)
+        elif op == 3: # !=
+            return (self.path, self._flags) != (other.path, other._flags)
+        elif op == 0: # <
+            return (self.path, self._flags) < (other.path, other._flags)
+        elif op == 1: # <=
+            return (self.path, self._flags) <= (other.path, other._flags)
+        elif op == 4: # >
+            return (self.path, self._flags) > (other.path, other._flags)
+        elif op == 5: # >=
+            return (self.path, self._flags) >= (other.path, other._flags)
 
     property current:
         def __get__(GitStatus self):
