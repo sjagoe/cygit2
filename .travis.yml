@@ -1,0 +1,14 @@
+language: python
+
+python:
+   - 2.7
+
+before_install:
+   - mkdir builds
+   - pushd builds
+   - ../.travis-build-libgit2.sh
+   - popd
+   - python setup.py build_ext -i -Ibuilds/libgit2/include -Lbuilds/libgit2/build
+
+script:
+   - python -m unittest discover
