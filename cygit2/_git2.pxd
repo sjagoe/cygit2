@@ -1931,13 +1931,15 @@ cdef extern from "git2.h":
 
     ctypedef __git_status_show_t git_status_show_t
 
-    cdef enum git_status_opt_t:
+    cdef enum __git_status_opt_t:
         GIT_STATUS_OPT_INCLUDE_UNTRACKED
         GIT_STATUS_OPT_INCLUDE_IGNORED
         GIT_STATUS_OPT_INCLUDE_UNMODIFIED
         GIT_STATUS_OPT_EXCLUDE_SUBMODULES
         GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS
         GIT_STATUS_OPT_DISABLE_PATHSPEC_MATCH
+
+    ctypedef __git_status_opt_t git_status_opt_t
 
     cdef struct __git_status_options:
         unsigned int version

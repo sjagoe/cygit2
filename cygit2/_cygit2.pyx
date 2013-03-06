@@ -44,6 +44,12 @@ from _git2 cimport \
     GIT_STATUS_WT_TYPECHANGE, \
     GIT_STATUS_IGNORED, \
     \
+    GIT_STATUS_OPT_INCLUDE_UNTRACKED, \
+    GIT_STATUS_OPT_INCLUDE_IGNORED, \
+    GIT_STATUS_OPT_INCLUDE_UNMODIFIED, \
+    GIT_STATUS_OPT_EXCLUDE_SUBMODULES, \
+    GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS, \
+    GIT_STATUS_OPT_DISABLE_PATHSPEC_MATCH, \
     GIT_STATUS_SHOW_INDEX_THEN_WORKDIR, \
     GIT_STATUS_OPTIONS_VERSION, \
     \
@@ -376,21 +382,43 @@ cdef class Repository:
         finally:
             git_strarray_free(cython.address(arr))
 
-    def status_ext(Repository self, EnumValue ignore_flags):
+    def status_ext(Repository self, include_untracked=True,
+                   include_ignored=True, include_unmodified=False,
+                   exclude_submodules=True, recurse_untracked_dirs=False,
+                   list paths=None):
         cdef int error
         cdef git_status_options opts
         cdef git_strarray pathspec
-        cdef char* spec = <char*>stdlib.malloc(sizeof(char)*2)
+        cdef bytes py_string
+
+        opts.version = GIT_STATUS_OPTIONS_VERSION
+        opts.flags = 0
+        opts.show = GIT_STATUS_SHOW_INDEX_THEN_WORKDIR
+
+        if include_untracked:
+            opts.flags |= GIT_STATUS_OPT_INCLUDE_UNTRACKED
+        if include_ignored:
+            opts.flags |= GIT_STATUS_OPT_INCLUDE_IGNORED
+        if include_unmodified:
+            opts.flags |= GIT_STATUS_OPT_INCLUDE_UNMODIFIED
+        if exclude_submodules:
+            opts.flags |= GIT_STATUS_OPT_EXCLUDE_SUBMODULES
+        if recurse_untracked_dirs:
+            opts.flags |= GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS
+
+        if paths is None:
+            opts.flags |= GIT_STATUS_OPT_DISABLE_PATHSPEC_MATCH
+            pathspec.strings = NULL
+            pathspec.count = 0
+        else:
+            pathspec.strings = <char**>stdlib.malloc(sizeof(char*)*len(paths))
         try:
-            spec[0] = '*'
-            spec[1] = '\0'
+            if pathspec.strings is not NULL:
+                for index, string in enumerate(paths):
+                    py_string = string
+                    pathspec.strings[index] = py_string
+                pathspec.count = len(paths)
 
-            pathspec.strings = cython.address(spec)
-            pathspec.count = 1
-
-            opts.version = GIT_STATUS_OPTIONS_VERSION
-            opts.show = GIT_STATUS_SHOW_INDEX_THEN_WORKDIR
-            opts.flags = ignore_flags.value
             opts.pathspec = pathspec
 
             result = {}
@@ -399,7 +427,8 @@ cdef class Repository:
             check_error(error)
             return result
         finally:
-            stdlib.free(spec)
+            if pathspec.strings is not NULL:
+                stdlib.free(pathspec.strings)
 
     def status(Repository self):
         cdef int error
