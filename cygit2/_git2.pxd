@@ -1901,6 +1901,9 @@ cdef extern from "git2.h":
 
     ctypedef int (*git_headlist_cb)(git_remote_head *, void *)
 
+    cdef enum:
+        GIT_STATUS_OPTIONS_VERSION
+
     cdef enum __git_status_t:
         GIT_STATUS_CURRENT
         GIT_STATUS_INDEX_NEW
@@ -1920,11 +1923,13 @@ cdef extern from "git2.h":
 
     int git_status_foreach(git_repository *repo, git_status_cb callback, void *payload)
 
-    cdef enum git_status_show_t:
+    cdef enum __git_status_show_t:
         GIT_STATUS_SHOW_INDEX_AND_WORKDIR
         GIT_STATUS_SHOW_INDEX_ONLY
         GIT_STATUS_SHOW_WORKDIR_ONLY
         GIT_STATUS_SHOW_INDEX_THEN_WORKDIR
+
+    ctypedef __git_status_show_t git_status_show_t
 
     cdef enum git_status_opt_t:
         GIT_STATUS_OPT_INCLUDE_UNTRACKED
@@ -1934,11 +1939,13 @@ cdef extern from "git2.h":
         GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS
         GIT_STATUS_OPT_DISABLE_PATHSPEC_MATCH
 
-    cdef struct git_status_options:
+    cdef struct __git_status_options:
         unsigned int version
         git_status_show_t show
         unsigned int flags
         git_strarray pathspec
+
+    ctypedef __git_status_options git_status_options
 
     int git_status_foreach_ext(git_repository *repo, git_status_options *opts, git_status_cb callback, void *payload)
 

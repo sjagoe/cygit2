@@ -29,7 +29,8 @@ from _git2 cimport \
     \
     GIT_OK, \
     \
-    git_status_t, git_status_foreach, \
+    git_status_t, git_status_foreach, git_status_foreach_ext, \
+    git_status_options, \
     \
     GIT_STATUS_CURRENT, \
     GIT_STATUS_INDEX_NEW, \
@@ -42,6 +43,9 @@ from _git2 cimport \
     GIT_STATUS_WT_DELETED, \
     GIT_STATUS_WT_TYPECHANGE, \
     GIT_STATUS_IGNORED, \
+    \
+    GIT_STATUS_SHOW_INDEX_THEN_WORKDIR, \
+    GIT_STATUS_OPTIONS_VERSION, \
     \
     git_clone, \
     \
@@ -371,6 +375,31 @@ cdef class Repository:
             return tuple(arr.strings[index] for index in xrange(arr.count))
         finally:
             git_strarray_free(cython.address(arr))
+
+    def status_ext(Repository self, EnumValue ignore_flags):
+        cdef int error
+        cdef git_status_options opts
+        cdef git_strarray pathspec
+        cdef char* spec = <char*>stdlib.malloc(sizeof(char)*2)
+        try:
+            spec[0] = '*'
+            spec[1] = '\0'
+
+            pathspec.strings = cython.address(spec)
+            pathspec.count = 1
+
+            opts.version = GIT_STATUS_OPTIONS_VERSION
+            opts.show = GIT_STATUS_SHOW_INDEX_THEN_WORKDIR
+            opts.flags = ignore_flags.value
+            opts.pathspec = pathspec
+
+            result = {}
+            error = git_status_foreach_ext(self._repository, cython.address(opts),
+                                           _status_foreach_cb, <void*>result)
+            check_error(error)
+            return result
+        finally:
+            stdlib.free(spec)
 
     def status(Repository self):
         cdef int error
