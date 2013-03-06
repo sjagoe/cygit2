@@ -2,6 +2,8 @@ from libc cimport stdlib
 
 import cython
 
+from _types cimport const_char_ptr
+
 from _git2 cimport \
     \
     git_repository, git_repository_open, git_repository_path, \
@@ -24,6 +26,21 @@ from _git2 cimport \
     git_reflog, git_reflog_free, git_reflog_read, git_reflog_entrycount, \
     const_git_reflog_entry, git_reflog_entry_byindex, git_reflog_entry_id_new, \
     git_reflog_entry_id_old, git_reflog_entry_message, \
+    \
+    GIT_OK, \
+    \
+    git_status_t, git_status_foreach, \
+    GIT_STATUS_CURRENT, \
+    GIT_STATUS_INDEX_NEW, \
+    GIT_STATUS_INDEX_MODIFIED, \
+    GIT_STATUS_INDEX_DELETED, \
+    GIT_STATUS_INDEX_RENAMED, \
+    GIT_STATUS_INDEX_TYPECHANGE, \
+    GIT_STATUS_WT_NEW, \
+    GIT_STATUS_WT_MODIFIED, \
+    GIT_STATUS_WT_DELETED, \
+    GIT_STATUS_WT_TYPECHANGE, \
+    GIT_STATUS_IGNORED, \
     \
     git_clone, \
     \
@@ -110,7 +127,7 @@ cdef assert_repository(Repository repo):
 
 cdef check_error(int error):
     cdef const_git_error *err
-    if error != 0:
+    if error != GIT_OK:
         err = giterr_last()
         if err is not NULL and err.klass in ERRORS:
             raise ERRORS[err.klass](err.message)
@@ -224,7 +241,7 @@ cdef class Reference:
     def reload(Reference self):
         cdef int error
         error = git_reference_reload(self._reference)
-        if error != 0:
+        if error != GIT_OK:
             self._reference = NULL
         check_error(error)
 
@@ -354,6 +371,127 @@ cdef class Repository:
         finally:
             git_strarray_free(cython.address(arr))
 
+    def status(Repository self):
+        cdef int error
+        result = {}
+        error = git_status_foreach(self._repository, _status_foreach_cb,
+                                   <void*>result)
+        check_error(error)
+        return result
+
     property path:
         def __get__(Repository self):
             return git_repository_path(self._repository)
+
+
+cdef class GitStatus:
+
+    CURRENT          = GIT_STATUS_CURRENT
+    INDEX_NEW        = GIT_STATUS_INDEX_NEW
+    INDEX_MODIFIED   = GIT_STATUS_INDEX_MODIFIED
+    INDEX_DELETED    = GIT_STATUS_INDEX_DELETED
+    INDEX_RENAMED    = GIT_STATUS_INDEX_RENAMED
+    INDEX_TYPECHANGE = GIT_STATUS_INDEX_TYPECHANGE
+    WT_NEW           = GIT_STATUS_WT_NEW
+    WT_MODIFIED      = GIT_STATUS_WT_MODIFIED
+    WT_DELETED       = GIT_STATUS_WT_DELETED
+    WT_TYPECHANGE    = GIT_STATUS_WT_TYPECHANGE
+    IGNORED          = GIT_STATUS_IGNORED
+
+    cdef git_status_t _flags
+
+    cdef readonly object path
+
+    def __init__(GitStatus self, path, flags):
+        self.path = path
+        self._flags = flags
+
+    def __repr__(GitStatus self):
+        result = []
+        for attr in ('current',
+                     'index_new',
+                     'index_modified',
+                     'index_deleted',
+                     'index_renamed',
+                     'index_typechange',
+                     'wt_new',
+                     'wt_modified',
+                     'wt_deleted',
+                     'wt_typechange',
+                     'ignored'):
+            if getattr(self, attr):
+                result.append(attr)
+        return '<GitStatus {}>'.format('|'.join(result))
+
+    def __richcmp__(GitStatus self, GitStatus other not None, int op):
+        if op == 2: # ==
+            return (self.path, self._flags) == (other.path, other._flags)
+        elif op == 3: # !=
+            return (self.path, self._flags) != (other.path, other._flags)
+        elif op == 0: # <
+            return (self.path, self._flags) < (other.path, other._flags)
+        elif op == 1: # <=
+            return (self.path, self._flags) <= (other.path, other._flags)
+        elif op == 4: # >
+            return (self.path, self._flags) > (other.path, other._flags)
+        elif op == 5: # >=
+            return (self.path, self._flags) >= (other.path, other._flags)
+
+    property current:
+        def __get__(GitStatus self):
+            return self._flags == GIT_STATUS_CURRENT
+
+    property index_new:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_INDEX_NEW) == GIT_STATUS_INDEX_NEW
+
+    property index_modified:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_INDEX_MODIFIED) == \
+                GIT_STATUS_INDEX_MODIFIED
+
+    property index_deleted:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_INDEX_DELETED) == \
+                GIT_STATUS_INDEX_DELETED
+
+    property index_renamed:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_INDEX_RENAMED) == \
+                GIT_STATUS_INDEX_RENAMED
+
+    property index_typechange:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_INDEX_TYPECHANGE) == \
+                GIT_STATUS_INDEX_TYPECHANGE
+
+    property wt_new:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_WT_NEW) == GIT_STATUS_WT_NEW
+
+    property wt_modified:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_WT_MODIFIED) == \
+                GIT_STATUS_WT_MODIFIED
+
+    property wt_deleted:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_WT_DELETED) == \
+                GIT_STATUS_WT_DELETED
+
+    property wt_typechange:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_WT_TYPECHANGE) == \
+                GIT_STATUS_WT_TYPECHANGE
+
+    property ignored:
+        def __get__(GitStatus self):
+            return (self._flags & GIT_STATUS_IGNORED) == GIT_STATUS_IGNORED
+
+
+cdef int _status_foreach_cb(const_char_ptr path,
+                            unsigned int flags, void *payload):
+    result = <object>payload
+    py_path = <char*>path
+    result[py_path] = GitStatus(py_path, flags)
+    return GIT_OK

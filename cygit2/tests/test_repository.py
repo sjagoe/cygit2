@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import unittest
 
-from cygit2._cygit2 import Repository, LibGit2RepositoryError
+from cygit2._cygit2 import Repository, GitStatus, LibGit2RepositoryError
 
 from cygit2.tests.fixtures import RepositoryFixture, Cygit2RepositoryFixture
 
@@ -49,6 +49,14 @@ class TestEmptyRepository(RepositoryFixture):
 
     def test_list_refs(self):
         self.assertEqual(self.empty_repo.list_refs(), ())
+
+    def test_status(self):
+        repo = Repository.init(self.empty_dir)
+        self.assertEqual(repo.status(), {})
+        with open(os.path.join(self.empty_dir, 'file'), 'wb') as fh:
+            fh.write('contents')
+        self.assertEqual(repo.status(),
+                         {'file': GitStatus('file', GitStatus.WT_NEW)})
 
 
 class TestRepositoryWithContents(Cygit2RepositoryFixture):
