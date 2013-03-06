@@ -14,4 +14,4 @@ install:
    - python setup.py build_ext -i -Ibuilds/libgit2/include -Lbuilds/libgit2/build
 
 script:
-   - python -m unittest discover
+   - LD_LIBRARY_PATH=builds/libgit2/build python -m unittest discover
