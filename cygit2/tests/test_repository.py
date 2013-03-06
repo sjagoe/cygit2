@@ -56,7 +56,18 @@ class TestEmptyRepository(RepositoryFixture):
         with open(os.path.join(self.empty_dir, 'file'), 'wb') as fh:
             fh.write('contents')
         self.assertEqual(repo.status(),
-                         {'file': GitStatus('file', GitStatus.WT_NEW)})
+                         {'file': GitStatus(GitStatus.WT_NEW)})
+
+    def test_status_ext(self):
+        repo = Repository.init(self.empty_dir)
+        with open(os.path.join(self.empty_dir, 'file'), 'wb') as fh:
+            fh.write('contents')
+        self.assertEqual(repo.status_ext(),
+                         {'file': GitStatus(GitStatus.WT_NEW)})
+        self.assertEqual(repo.status_ext(include_untracked=False), {})
+        self.assertEqual(repo.status_ext(paths=['foo']), {})
+        self.assertEqual(repo.status_ext(paths=['file']),
+                         {'file': GitStatus(GitStatus.WT_NEW)})
 
 
 class TestRepositoryWithContents(Cygit2RepositoryFixture):
