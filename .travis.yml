@@ -8,6 +8,9 @@ before_install:
    - pushd builds
    - ../.travis-build-libgit2.sh
    - popd
+
+install:
+   - pip install cython
    - python setup.py build_ext -i -Ibuilds/libgit2/include -Lbuilds/libgit2/build
 
 script:
