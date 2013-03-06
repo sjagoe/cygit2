@@ -384,7 +384,6 @@ cdef class Repository:
             return git_repository_path(self._repository)
 
 
-
 cdef class GitStatus:
 
     CURRENT          = GIT_STATUS_CURRENT
