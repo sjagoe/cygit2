@@ -4,6 +4,7 @@ cygit2
 
 .. image:: https://secure.travis-ci.org/sjagoe/cygit2.png
     :alt: Travis CI Build Status
+    :target: https://travis-ci.org/sjagoe/cygit2
 
 ``cygit2`` is a wrapper around ``libgit2``, similar fashion to ``pygit2``.
 The main difference at the moment is that ``cygit2`` uses cython to wrap
