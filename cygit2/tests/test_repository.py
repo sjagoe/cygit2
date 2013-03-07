@@ -82,6 +82,11 @@ class TestRepositoryWithContents(Cygit2RepositoryFixture):
         # FIXME: insufficient test
         self.repo.read(oid)
 
+    def test_lookup_commit(self):
+        ref = self.repo.lookup_ref('refs/heads/master')
+        commit = self.repo.lookup_commit(ref.oid)
+        self.assertEqual(commit.oid, ref.oid)
+
 
 if __name__ == '__main__':
     unittest.main()

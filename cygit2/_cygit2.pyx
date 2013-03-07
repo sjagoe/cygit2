@@ -5,6 +5,7 @@ import cython
 from libc.string cimport const_char
 
 from _git2 cimport \
+    git_time_t, \
     \
     git_repository, git_repository_open, git_repository_path, \
     git_repository_init, git_repository_free, git_repository_config, \
@@ -23,6 +24,12 @@ from _git2 cimport \
     GIT_OBJ__EXT2, \
     GIT_OBJ_OFS_DELTA, \
     GIT_OBJ_REF_DELTA, \
+    \
+    git_commit, git_commit_free, git_commit_lookup_prefix, git_commit_id, \
+    git_commit_message_encoding, git_commit_message, git_commit_time, \
+    git_commit_time_offset, git_commit_committer, git_commit_author, \
+    git_commit_tree, git_commit_tree_id, git_commit_parentcount, \
+    git_commit_parent, git_commit_parent_id, git_commit_nth_gen_ancestor, \
     \
     git_config, git_config_free, \
     const_git_config_entry, git_config_get_entry, \
@@ -263,6 +270,129 @@ cdef class GitOdb:
         return obj
 
 
+cdef class GitCommit:
+
+    cdef git_commit *_commit
+
+    def __cinit__(GitCommit self):
+        self._commit = NULL
+
+    def __dealloc__(GitCommit self):
+        if self._commit is not NULL:
+            git_commit_free(self._commit)
+
+    cdef object _get_message(GitCommit self):
+        cdef bytes py_string
+        cdef const_char *message = git_commit_message(self._commit)
+        if message is NULL:
+            return None
+        py_string = <char*>message
+        return py_string
+
+    def ancestor(GitCommit self, unsigned int generation):
+        cdef int error
+        cdef GitCommit parent = GitCommit()
+        error = git_commit_nth_gen_ancestor(cython.address(parent._commit),
+                                            self._commit, generation)
+        check_error(error)
+        return parent
+
+    property oid:
+        def __get__(GitCommit self):
+            cdef const_git_oid *oidp
+            oidp = git_commit_id(self._commit)
+            return make_oid(self, oidp)
+
+    property message_encoding:
+        def __get__(GitCommit self):
+            cdef bytes py_string
+            cdef const_char *encoding = git_commit_message_encoding(self._commit)
+            if encoding is NULL:
+                return None
+            py_string = <char*>encoding
+            return py_string
+
+    property message:
+        def __get__(GitCommit self):
+            message = self._get_message()
+            if message is None:
+                return None
+            encoding = self.encoding
+            if encoding is None:
+                encoding = 'UTF-8' # FIXME
+            return message.decode(encoding)
+
+    property _message:
+        def __get__(GitCommit self):
+            return self._get_message()
+
+    # FIXME: Convert time and time_offset into datetime
+    property time:
+        def __get__(GitCommit self):
+            cdef git_time_t time = git_commit_time(self._commit)
+            cdef object py_time = time
+            return py_time
+
+    property time_offset:
+        def __get__(GitCommit self):
+            cdef int offset = git_commit_time_offset(self._commit)
+            return offset
+
+    property committer:
+        def __get__(GitCommit self):
+            raise NotImplementedError() # git_commit_committer
+
+    property author:
+        def __get__(GitCommit self):
+            raise NotImplementedError() # git_commit_author
+
+    property tree:
+        def __get__(GitCommit self):
+            raise NotImplementedError() # git_commit_tree
+
+    property tree_Id:
+        def __get__(GitCommit self):
+            cdef const_git_oid *oidp
+            oidp = git_commit_tree_id(self._commit)
+            return make_oid(self, oidp)
+
+    property parents:
+        def __get__(GitCommit self):
+            cdef int error
+            cdef int count
+            cdef int index
+            cdef GitCommit parent
+            count = git_commit_parentcount(self._commit)
+            if count == 0:
+                return []
+            parents = []
+            for index from 0 <= index < count:
+                parent = GitCommit()
+                error = git_commit_parent(cython.address(parent._commit),
+                                          self._commit, index)
+                check_error(error)
+                parents.append(parent)
+            return parents
+
+    property parent_ids:
+        def __get__(GitCommit self):
+            cdef int error
+            cdef int count
+            cdef int index
+            cdef const_git_oid *oidp
+            cdef GitOid oid
+            count = git_commit_parentcount(self._commit)
+            if count == 0:
+                return []
+            parent_ids = []
+            for index from 0 <= index < count:
+                oidp = git_commit_parent_id(self._commit, index)
+                oid = make_oid(self, oidp)
+                if oid is not None:
+                    parent_ids.append(oid)
+            return parent_ids
+
+
 cdef class Config:
 
     cdef git_config *_config
@@ -308,6 +438,20 @@ cdef class GitOid:
         self._owner = None
         if self._string is not NULL:
             stdlib.free(self._string)
+
+    def __richcmp__(GitOid self not None, GitOid other not None, int op):
+        if op == 2: # ==
+            return self.hex == other.hex
+        elif op == 3: # !=
+            return self.hex != other.hex
+        elif op == 0: # <
+            return self.hex < other.hex
+        elif op == 1: # <= (not >)
+            return not (self.hex > other.hex)
+        elif op == 4: # >
+            return self.hex > other.hex
+        elif op == 5: # >= (not <)
+            return not (self.hex < other.hex)
 
     cdef format(GitOid self):
         cdef char *hex_str = <char*>stdlib.malloc(sizeof(char)*40)
@@ -520,6 +664,14 @@ cdef class Repository:
                                      self._repository, name)
         check_error(error)
         return ref
+
+    def lookup_commit(Repository self, GitOid oid):
+        cdef int error
+        cdef GitCommit commit = GitCommit()
+        error = git_commit_lookup_prefix(cython.address(commit._commit),
+                                         self._repository, oid._oid, oid.length)
+        check_error(error)
+        return commit
 
     def list_refs(Repository self):
         cdef unsigned int index
