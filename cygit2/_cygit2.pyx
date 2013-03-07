@@ -173,12 +173,12 @@ ERRORS = {
 }
 
 
-cdef assert_repository(Repository repo):
+cdef void assert_repository(Repository repo) except *:
     if repo._repository is NULL:
         raise LibGit2Error('Invalid Repository')
 
 
-cdef check_error(int error):
+cdef void check_error(int error) except *:
     cdef const_git_error *err
     if error != GIT_OK:
         err = giterr_last()
@@ -504,7 +504,7 @@ cdef class GitOid:
         elif op == 5: # >= (not <)
             return not (self.hex < other.hex)
 
-    cdef format(GitOid self):
+    cdef object format(GitOid self):
         cdef char *hex_str = <char*>stdlib.malloc(sizeof(char)*40)
         git_oid_fmt(hex_str, self._oid)
         try:
@@ -840,7 +840,7 @@ cdef class ComposableEnumValue(EnumValue):
     def __ror__(ComposableEnumValue self, ComposableEnumValue other):
         return CompositeEnumValue(other, self)
 
-    cdef _and(ComposableEnumValue self, ComposableEnumValue other):
+    cdef CompositeEnumValue _and(ComposableEnumValue self, ComposableEnumValue other):
         _other = set(other.items)
         this = set(self.items)
         return CompositeEnumValue(*sorted(this & _other))
