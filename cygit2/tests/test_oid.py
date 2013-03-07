@@ -1,6 +1,3 @@
-#import faulthandler
-#faulthandler.enable()
-
 import unittest
 
 from cygit2._cygit2 import GitOid
