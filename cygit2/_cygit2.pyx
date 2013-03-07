@@ -162,7 +162,7 @@ cdef check_error(int error):
 
 
 @cython.internal
-cdef class _GitObjectType:
+cdef class _GitOdbObjectType:
 
     cdef EnumValue ANY
     cdef EnumValue BAD
@@ -175,19 +175,19 @@ cdef class _GitObjectType:
     cdef EnumValue OFS_DELTA
     cdef EnumValue REF_DELTA
 
-    def __init__(_GitObjectType self):
-        self.ANY       = EnumValue('GitObjectType.ANY', GIT_OBJ_ANY)
-        self.BAD       = EnumValue('GitObjectType.BAD', GIT_OBJ_BAD)
-        self._EXT1     = EnumValue('GitObjectType._EXT1', GIT_OBJ__EXT1)
-        self.COMMIT    = EnumValue('GitObjectType.COMMIT', GIT_OBJ_COMMIT)
-        self.TREE      = EnumValue('GitObjectType.TREE', GIT_OBJ_TREE)
-        self.BLOB      = EnumValue('GitObjectType.BLOB', GIT_OBJ_BLOB)
-        self.TAG       = EnumValue('GitObjectType.TAG', GIT_OBJ_TAG)
-        self._EXT2     = EnumValue('GitObjectType._EXT2', GIT_OBJ__EXT2)
-        self.OFS_DELTA = EnumValue('GitObjectType.OFS_DELTA', GIT_OBJ_OFS_DELTA)
-        self.REF_DELTA = EnumValue('GitObjectType.REF_DELTA', GIT_OBJ_REF_DELTA)
+    def __init__(_GitOdbObjectType self):
+        self.ANY       = EnumValue('GitOdbObjectType.ANY', GIT_OBJ_ANY)
+        self.BAD       = EnumValue('GitOdbObjectType.BAD', GIT_OBJ_BAD)
+        self._EXT1     = EnumValue('GitOdbObjectType._EXT1', GIT_OBJ__EXT1)
+        self.COMMIT    = EnumValue('GitOdbObjectType.COMMIT', GIT_OBJ_COMMIT)
+        self.TREE      = EnumValue('GitOdbObjectType.TREE', GIT_OBJ_TREE)
+        self.BLOB      = EnumValue('GitOdbObjectType.BLOB', GIT_OBJ_BLOB)
+        self.TAG       = EnumValue('GitOdbObjectType.TAG', GIT_OBJ_TAG)
+        self._EXT2     = EnumValue('GitOdbObjectType._EXT2', GIT_OBJ__EXT2)
+        self.OFS_DELTA = EnumValue('GitOdbObjectType.OFS_DELTA', GIT_OBJ_OFS_DELTA)
+        self.REF_DELTA = EnumValue('GitOdbObjectType.REF_DELTA', GIT_OBJ_REF_DELTA)
 
-    cdef EnumValue _from_uint(_GitObjectType self, unsigned int type):
+    cdef EnumValue _from_uint(_GitOdbObjectType self, unsigned int type):
         for item in (self.ANY,
                      self.BAD,
                      self._EXT1,
@@ -202,22 +202,22 @@ cdef class _GitObjectType:
                 return item
 
 
-cdef _GitObjectType GitObjectType = _GitObjectType()
+cdef _GitOdbObjectType GitOdbObjectType = _GitOdbObjectType()
 
 
-cdef class GitObject:
+cdef class GitOdbObject:
 
     cdef git_odb_object *_object
 
-    def __cinit__(GitObject self):
+    def __cinit__(GitOdbObject self):
         self._object = NULL
 
-    def __dealloc__(GitObject self):
+    def __dealloc__(GitOdbObject self):
         if self._object is not NULL:
             git_odb_object_free(self._object)
 
     property oid:
-        def __get__(GitObject self):
+        def __get__(GitOdbObject self):
             cdef const_git_oid *oidp
             oidp = git_odb_object_id(self._object)
             if oidp is NULL:
@@ -225,23 +225,23 @@ cdef class GitObject:
             return make_oid(self, oidp)
 
     property data:
-        def __get__(GitObject self):
+        def __get__(GitOdbObject self):
             cdef const_char *string = <const_char*>git_odb_object_data(self._object)
             cdef bytes data = <char*>string
             return data
 
     property size:
-        def __get__(GitObject self):
+        def __get__(GitOdbObject self):
             cdef size_t size = git_odb_object_size(self._object)
             return size
 
     property type:
-        def __get__(GitObject self):
+        def __get__(GitOdbObject self):
             cdef unsigned int utype = git_odb_object_type(self._object)
-            return GitObjectType._from_uint(utype)
+            return GitOdbObjectType._from_uint(utype)
 
-    def __repr__(GitObject self):
-        return '<GitObject type={!r} size={!r}>'.format(self.type, self.size)
+    def __repr__(GitOdbObject self):
+        return '<GitOdbObject type={!r} size={!r}>'.format(self.type, self.size)
 
 
 @cython.internal
@@ -256,9 +256,9 @@ cdef class GitOdb:
         if self._odb is not NULL:
             git_odb_free(self._odb)
 
-    cdef GitObject read_prefix(GitOdb self, GitOid oid):
+    cdef GitOdbObject read_prefix(GitOdb self, GitOid oid):
         cdef int error
-        cdef GitObject obj = GitObject()
+        cdef GitOdbObject obj = GitOdbObject()
         error = git_odb_read_prefix(cython.address(obj._object), self._odb,
                                     oid._oid, oid.length)
         check_error(error)
