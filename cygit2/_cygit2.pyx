@@ -39,10 +39,9 @@ from _git2 cimport \
     git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, \
     \
     git_reference, git_reference_free, git_reference_lookup, \
-    git_reference_name, git_reference_target, git_reference_reload, \
-    git_reference_cmp, git_reference_has_log, git_reference_list, \
-    git_reference_is_valid_name, git_reference_is_branch, \
-    git_reference_is_packed, git_reference_is_remote, \
+    git_reference_name, git_reference_target, git_reference_cmp, \
+    git_reference_has_log, git_reference_list, git_reference_is_valid_name, \
+    git_reference_is_branch, git_reference_is_remote, \
     GIT_REF_LISTALL, \
     \
     git_reflog, git_reflog_free, git_reflog_read, git_reflog_entrycount, \
@@ -540,13 +539,6 @@ cdef class Reference:
     def __cmp__(Reference self, Reference other):
         return git_reference_cmp(self._reference, other._reference)
 
-    def reload(Reference self):
-        cdef int error
-        error = git_reference_reload(self._reference)
-        if error != GIT_OK:
-            self._reference = NULL
-        check_error(error)
-
     def has_log(Reference self):
         cdef int code
         code = git_reference_has_log(self._reference)
@@ -577,9 +569,6 @@ cdef class Reference:
 
     def is_branch(Reference self):
         return git_reference_is_branch(self._reference) != 0
-
-    def is_packed(Reference self):
-        return git_reference_is_packed(self._reference) != 0
 
     def is_remote(Reference self):
         return git_reference_is_remote(self._reference) != 0

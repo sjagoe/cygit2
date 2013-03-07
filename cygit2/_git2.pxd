@@ -122,6 +122,16 @@ cdef extern from "git2.h":
     cdef struct git_odb_writepack:
         pass
 
+    ctypedef git_refdb git_refdb
+
+    cdef struct git_refdb:
+        pass
+
+    ctypedef git_refdb_backend git_refdb_backend
+
+    cdef struct git_refdb_backend:
+        pass
+
     ctypedef git_repository git_repository
 
     cdef struct git_repository:
@@ -226,8 +236,6 @@ cdef extern from "git2.h":
         GIT_REF_INVALID
         GIT_REF_OID
         GIT_REF_SYMBOLIC
-        GIT_REF_PACKED
-        GIT_REF_HAS_PEEL
         GIT_REF_LISTALL
 
     cdef enum git_branch_t:
@@ -669,36 +677,6 @@ cdef extern from "git2.h":
 
     ctypedef int (*git_transfer_progress_callback)(git_transfer_progress *, void *)
 
-    ctypedef git_indexer git_indexer
-
-    cdef struct git_indexer:
-        pass
-
-    ctypedef git_indexer_stream git_indexer_stream
-
-    cdef struct git_indexer_stream:
-        pass
-
-    int git_indexer_stream_new(git_indexer_stream **out, char *path, git_transfer_progress_callback progress_cb, void *progress_cb_payload)
-
-    int git_indexer_stream_add(git_indexer_stream *idx, void *data, size_t size, git_transfer_progress *stats)
-
-    int git_indexer_stream_finalize(git_indexer_stream *idx, git_transfer_progress *stats)
-
-    git_oid *git_indexer_stream_hash(git_indexer_stream *idx)
-
-    void git_indexer_stream_free(git_indexer_stream *idx)
-
-    int git_indexer_new(git_indexer **out, char *packname)
-
-    int git_indexer_run(git_indexer *idx, git_transfer_progress *stats)
-
-    int git_indexer_write(git_indexer *idx)
-
-    git_oid *git_indexer_hash(git_indexer *idx)
-
-    void git_indexer_free(git_indexer *idx)
-
     int git_odb_new(git_odb **out)
 
     int git_odb_open(git_odb **out, char *objects_dir)
@@ -810,6 +788,10 @@ cdef extern from "git2.h":
 
     void git_repository_set_odb(git_repository *repo, git_odb *odb)
 
+    int git_repository_refdb(git_refdb **out, git_repository *repo)
+
+    void git_repository_set_refdb(git_repository *repo, git_refdb *refdb)
+
     int git_repository_index(git_index **out, git_repository *repo)
 
     void git_repository_set_index(git_repository *repo, git_index *index)
@@ -914,25 +896,19 @@ cdef extern from "git2.h":
 
     git_repository *git_reference_owner(git_reference *ref)
 
-    int git_reference_symbolic_set_target(git_reference *ref, char *target)
+    int git_reference_symbolic_set_target(git_reference **out, git_reference *ref, char *target)
 
-    int git_reference_set_target(git_reference *ref, git_oid *id)
+    int git_reference_set_target(git_reference **out, git_reference *ref, git_oid *id)
 
-    int git_reference_rename(git_reference *ref, char *name, int force)
+    int git_reference_rename(git_reference **out, git_reference *ref, char *new_name, int force)
 
     int git_reference_delete(git_reference *ref)
-
-    int git_reference_packall(git_repository *repo)
 
     int git_reference_list(git_strarray *array, git_repository *repo, unsigned int list_flags)
 
     ctypedef int (*git_reference_foreach_cb)(char *, void *)
 
     int git_reference_foreach(git_repository *repo, unsigned int list_flags, git_reference_foreach_cb callback, void *payload)
-
-    int git_reference_is_packed(git_reference *ref)
-
-    int git_reference_reload(git_reference *ref)
 
     void git_reference_free(git_reference *ref)
 
@@ -1345,105 +1321,6 @@ cdef extern from "git2.h":
 
     int git_diff_blob_to_buffer(git_blob *old_blob, char *buffer, size_t buffer_len, git_diff_options *options, git_diff_file_cb file_cb, git_diff_hunk_cb hunk_cb, git_diff_data_cb data_cb, void *payload)
 
-    cdef struct git_index_time:
-        git_time_t seconds
-        unsigned int nanoseconds
-
-    cdef struct git_index_entry:
-        git_index_time ctime
-        git_index_time mtime
-        unsigned int dev
-        unsigned int ino
-        unsigned int mode
-        unsigned int uid
-        unsigned int gid
-        git_off_t file_size
-        git_oid oid
-        short unsigned int flags
-        short unsigned int flags_extended
-        char *path
-
-    ctypedef git_index_entry git_index_entry
-
-    cdef struct git_index_reuc_entry:
-        unsigned int mode[3]
-        git_oid oid[3]
-        char *path
-
-    ctypedef git_index_reuc_entry git_index_reuc_entry
-
-    cdef enum:
-        GIT_INDEXCAP_IGNORE_CASE
-        GIT_INDEXCAP_NO_FILEMODE
-        GIT_INDEXCAP_NO_SYMLINKS
-        GIT_INDEXCAP_FROM_OWNER
-
-    int git_index_open(git_index **out, char *index_path)
-
-    int git_index_new(git_index **out)
-
-    void git_index_free(git_index *index)
-
-    git_repository *git_index_owner(git_index *index)
-
-    unsigned int git_index_caps(git_index *index)
-
-    int git_index_set_caps(git_index *index, unsigned int caps)
-
-    int git_index_read(git_index *index)
-
-    int git_index_write(git_index *index)
-
-    int git_index_read_tree(git_index *index, git_tree *tree)
-
-    int git_index_write_tree(git_oid *out, git_index *index)
-
-    int git_index_write_tree_to(git_oid *out, git_index *index, git_repository *repo)
-
-    size_t git_index_entrycount(git_index *index)
-
-    void git_index_clear(git_index *index)
-
-    git_index_entry *git_index_get_byindex(git_index *index, size_t n)
-
-    git_index_entry *git_index_get_bypath(git_index *index, char *path, int stage)
-
-    int git_index_remove(git_index *index, char *path, int stage)
-
-    int git_index_remove_directory(git_index *index, char *dir, int stage)
-
-    int git_index_add(git_index *index, git_index_entry *source_entry)
-
-    int git_index_entry_stage(git_index_entry *entry)
-
-    int git_index_add_bypath(git_index *index, char *path)
-
-    int git_index_remove_bypath(git_index *index, char *path)
-
-    int git_index_find(size_t *at_pos, git_index *index, char *path)
-
-    int git_index_conflict_add(git_index *index, git_index_entry *ancestor_entry, git_index_entry *our_entry, git_index_entry *their_entry)
-
-    int git_index_conflict_get(git_index_entry **ancestor_out, git_index_entry **our_out, git_index_entry **their_out, git_index *index, char *path)
-
-    int git_index_conflict_remove(git_index *index, char *path)
-
-    void git_index_conflict_cleanup(git_index *index)
-
-    int git_index_has_conflicts(git_index *index)
-
-    unsigned int git_index_reuc_entrycount(git_index *index)
-
-    int git_index_reuc_find(size_t *at_pos, git_index *index, char *path)
-
-    git_index_reuc_entry *git_index_reuc_get_bypath(git_index *index, char *path)
-
-    git_index_reuc_entry *git_index_reuc_get_byindex(git_index *index, size_t n)
-
-    int git_index_reuc_add(git_index *index, char *path, int ancestor_mode, git_oid *ancestor_id, int our_mode, git_oid *our_id, int their_mode, git_oid *their_id)
-
-    int git_index_reuc_remove(git_index *index, size_t n)
-
     cdef enum:
         GIT_CONFIG_LEVEL_SYSTEM
         GIT_CONFIG_LEVEL_XDG
@@ -1809,26 +1686,6 @@ cdef extern from "git2.h":
 
     int git_clone(git_repository **out, char *url, char *local_path, git_clone_options *options)
 
-    cdef struct git_push_options:
-        unsigned int version
-        unsigned int pb_parallelism
-
-    int git_push_new(git_push **out, git_remote *remote)
-
-    int git_push_set_options(git_push *push, git_push_options *opts)
-
-    int git_push_add_refspec(git_push *push, char *refspec)
-
-    int git_push_update_tips(git_push *push)
-
-    int git_push_finish(git_push *push)
-
-    int git_push_unpack_ok(git_push *push)
-
-    int git_push_status_foreach(git_push *push, int (*cb)(char *, char *, void *), void *data)
-
-    void git_push_free(git_push *push)
-
     cdef enum git_attr_t:
         GIT_ATTR_UNSPECIFIED_T
         GIT_ATTR_TRUE_T
@@ -1854,26 +1711,6 @@ cdef extern from "git2.h":
     int git_ignore_clear_internal_rules(git_repository *repo)
 
     int git_ignore_path_is_ignored(int *ignored, git_repository *repo, char *path)
-
-    int git_branch_create(git_reference **out, git_repository *repo, char *branch_name, git_commit *target, int force)
-
-    int git_branch_delete(git_reference *branch)
-
-    int git_branch_foreach(git_repository *repo, unsigned int list_flags, int (*branch_cb)(char *, git_branch_t, void *), void *payload)
-
-    int git_branch_move(git_reference *branch, char *new_branch_name, int force)
-
-    int git_branch_lookup(git_reference **out, git_repository *repo, char *branch_name, git_branch_t branch_type)
-
-    int git_branch_name(char **out, git_reference *ref)
-
-    int git_branch_tracking(git_reference **out, git_reference *branch)
-
-    int git_branch_tracking_name(char *tracking_branch_name_out, size_t buffer_size, git_repository *repo, char *canonical_branch_name)
-
-    int git_branch_is_head(git_reference *branch)
-
-    int git_branch_remote_name(char *remote_name_out, size_t buffer_size, git_repository *repo, char *canonical_branch_name)
 
     char *git_refspec_src(git_refspec *refspec)
 
@@ -2060,65 +1897,13 @@ cdef extern from "git2.h":
 
     int git_submodule_location(unsigned int *location_status, git_submodule *submodule)
 
-    ctypedef int (*git_note_foreach_cb)(git_oid *, git_oid *, void *)
+    # cdef enum git_reset_t:
+    #     GIT_RESET_SOFT
+    #     GIT_RESET_MIXED
+    #     GIT_RESET_HARD
 
-    int git_note_read(git_note **out, git_repository *repo, char *notes_ref, git_oid *oid)
+    # int git_reset(git_repository *repo, git_object *target, git_reset_t reset_type)
 
-    char *git_note_message(git_note *note)
-
-    git_oid *git_note_oid(git_note *note)
-
-    int git_note_create(git_oid *out, git_repository *repo, git_signature *author, git_signature *committer, char *notes_ref, git_oid *oid, char *note, int force)
-
-    int git_note_remove(git_repository *repo, char *notes_ref, git_signature *author, git_signature *committer, git_oid *oid)
-
-    void git_note_free(git_note *note)
-
-    int git_note_default_ref(char **out, git_repository *repo)
-
-    int git_note_foreach(git_repository *repo, char *notes_ref, git_note_foreach_cb note_cb, void *payload)
-
-    cdef enum git_reset_t:
-        GIT_RESET_SOFT
-        GIT_RESET_MIXED
-        GIT_RESET_HARD
-
-    int git_reset(git_repository *repo, git_object *target, git_reset_t reset_type)
-
-    int git_reset_default(git_repository *repo, git_object *target, git_strarray *pathspecs)
+    # int git_reset_default(git_repository *repo, git_object *target, git_strarray *pathspecs)
 
     int git_message_prettify(char *out, size_t out_size, char *message, int strip_comments)
-
-    int git_packbuilder_new(git_packbuilder **out, git_repository *repo)
-
-    unsigned int git_packbuilder_set_threads(git_packbuilder *pb, unsigned int n)
-
-    int git_packbuilder_insert(git_packbuilder *pb, git_oid *id, char *name)
-
-    int git_packbuilder_insert_tree(git_packbuilder *pb, git_oid *id)
-
-    int git_packbuilder_write(git_packbuilder *pb, char *file)
-
-    ctypedef int (*git_packbuilder_foreach_cb)(void *, size_t, void *)
-
-    int git_packbuilder_foreach(git_packbuilder *pb, git_packbuilder_foreach_cb cb, void *payload)
-
-    uint32_t git_packbuilder_object_count(git_packbuilder *pb)
-
-    uint32_t git_packbuilder_written(git_packbuilder *pb)
-
-    void git_packbuilder_free(git_packbuilder *pb)
-
-    cdef enum git_stash_flags:
-        GIT_STASH_DEFAULT
-        GIT_STASH_KEEP_INDEX
-        GIT_STASH_INCLUDE_UNTRACKED
-        GIT_STASH_INCLUDE_IGNORED
-
-    int git_stash_save(git_oid *out, git_repository *repo, git_signature *stasher, char *message, unsigned int flags)
-
-    ctypedef int (*git_stash_cb)(size_t, char *, git_oid *, void *)
-
-    int git_stash_foreach(git_repository *repo, git_stash_cb callback, void *payload)
-
-    int git_stash_drop(git_repository *repo, size_t index)

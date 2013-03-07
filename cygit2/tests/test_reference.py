@@ -39,9 +39,6 @@ class TestReferenceEmptyRepository(RepositoryFixture):
     def test_is_branch_empty_repo(self):
         self.assertFalse(self.ref.is_branch())
 
-    def test_is_packed_empty_repo(self):
-        self.assertFalse(self.ref.is_packed())
-
     def test_is_remote_empty_repo(self):
         self.assertFalse(self.ref.is_remote())
 
@@ -55,11 +52,6 @@ class TestReference(Cygit2RepositoryFixture):
     def test_oid_property(self):
         ref = self.repo.lookup_ref('refs/heads/master')
         oid = ref.oid
-
-    def test_reload(self):
-        ref = self.repo.lookup_ref('refs/heads/master')
-        ref.reload()
-        self.assertTrue(ref.has_log())
 
     def test_reflog(self):
         ref = self.repo.lookup_ref('refs/heads/master')
