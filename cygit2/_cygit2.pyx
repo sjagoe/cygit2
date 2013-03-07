@@ -187,7 +187,7 @@ cdef class _GitObjectType:
         self.OFS_DELTA = EnumValue('GitObjectType.OFS_DELTA', GIT_OBJ_OFS_DELTA)
         self.REF_DELTA = EnumValue('GitObjectType.REF_DELTA', GIT_OBJ_REF_DELTA)
 
-    def _from_uint(_GitObjectType self, unsigned int type):
+    cdef EnumValue _from_uint(_GitObjectType self, unsigned int type):
         for item in (self.ANY,
                      self.BAD,
                      self._EXT1,
@@ -202,7 +202,7 @@ cdef class _GitObjectType:
                 return item
 
 
-GitObjectType = _GitObjectType()
+cdef _GitObjectType GitObjectType = _GitObjectType()
 
 
 cdef class GitObject:
@@ -256,7 +256,7 @@ cdef class GitOdb:
         if self._odb is not NULL:
             git_odb_free(self._odb)
 
-    def read_prefix(GitOdb self, GitOid oid):
+    cdef GitObject read_prefix(GitOdb self, GitOid oid):
         cdef int error
         obj = GitObject()
         error = git_odb_read_prefix(cython.address(obj._object), self._odb,
@@ -541,7 +541,7 @@ cdef class Repository:
             git_strarray_free(cython.address(arr))
 
     def read(Repository self, GitOid oid):
-        odb = self.odb()
+        cdef GitOdb odb = self.odb()
         return odb.read_prefix(oid)
 
     def status_ext(Repository self, include_untracked=True,
