@@ -2,7 +2,7 @@ from libc cimport stdlib
 
 import cython
 
-from _types cimport const_char_ptr
+from libc.string cimport const_char
 
 from _git2 cimport \
     \
@@ -10,7 +10,19 @@ from _git2 cimport \
     git_repository_init, git_repository_free, git_repository_config, \
     \
     git_odb, git_repository_odb, git_odb_read_prefix, git_odb_free, \
-    git_odb_object, git_odb_object_free, \
+    git_odb_object, git_odb_object_free, git_odb_object_id, \
+    git_odb_object_data, git_odb_object_size, git_odb_object_type, \
+    \
+    GIT_OBJ_ANY, \
+    GIT_OBJ_BAD, \
+    GIT_OBJ__EXT1, \
+    GIT_OBJ_COMMIT, \
+    GIT_OBJ_TREE, \
+    GIT_OBJ_BLOB, \
+    GIT_OBJ_TAG, \
+    GIT_OBJ__EXT2, \
+    GIT_OBJ_OFS_DELTA, \
+    GIT_OBJ_REF_DELTA, \
     \
     git_config, git_config_free, \
     const_git_config_entry, git_config_get_entry, \
@@ -149,6 +161,50 @@ cdef check_error(int error):
             raise LibGit2Error('Unknown error')
 
 
+@cython.internal
+cdef class _GitObjectType:
+
+    cdef EnumValue ANY
+    cdef EnumValue BAD
+    cdef EnumValue _EXT1
+    cdef EnumValue COMMIT
+    cdef EnumValue TREE
+    cdef EnumValue BLOB
+    cdef EnumValue TAG
+    cdef EnumValue _EXT2
+    cdef EnumValue OFS_DELTA
+    cdef EnumValue REF_DELTA
+
+    def __init__(_GitObjectType self):
+        self.ANY       = EnumValue('GitObjectType.ANY', GIT_OBJ_ANY)
+        self.BAD       = EnumValue('GitObjectType.BAD', GIT_OBJ_BAD)
+        self._EXT1     = EnumValue('GitObjectType._EXT1', GIT_OBJ__EXT1)
+        self.COMMIT    = EnumValue('GitObjectType.COMMIT', GIT_OBJ_COMMIT)
+        self.TREE      = EnumValue('GitObjectType.TREE', GIT_OBJ_TREE)
+        self.BLOB      = EnumValue('GitObjectType.BLOB', GIT_OBJ_BLOB)
+        self.TAG       = EnumValue('GitObjectType.TAG', GIT_OBJ_TAG)
+        self._EXT2     = EnumValue('GitObjectType._EXT2', GIT_OBJ__EXT2)
+        self.OFS_DELTA = EnumValue('GitObjectType.OFS_DELTA', GIT_OBJ_OFS_DELTA)
+        self.REF_DELTA = EnumValue('GitObjectType.REF_DELTA', GIT_OBJ_REF_DELTA)
+
+    def _from_uint(_GitObjectType self, unsigned int type):
+        for item in (self.ANY,
+                     self.BAD,
+                     self._EXT1,
+                     self.COMMIT,
+                     self.TREE,
+                     self.BLOB,
+                     self.TAG,
+                     self._EXT2,
+                     self.OFS_DELTA,
+                     self.REF_DELTA):
+            if type == item.value:
+                return item
+
+
+GitObjectType = _GitObjectType()
+
+
 cdef class GitObject:
 
     cdef git_odb_object *_object
@@ -159,6 +215,33 @@ cdef class GitObject:
     def __dealloc__(GitObject self):
         if self._object is not NULL:
             git_odb_object_free(self._object)
+
+    property oid:
+        def __get__(GitObject self):
+            cdef const_git_oid *oidp
+            oidp = git_odb_object_id(self._object)
+            if oidp is NULL:
+                return None
+            return make_oid(self, oidp)
+
+    property data:
+        def __get__(GitObject self):
+            cdef const_char *string = <const_char*>git_odb_object_data(self._object)
+            cdef bytes data = <char*>string
+            return data
+
+    property size:
+        def __get__(GitObject self):
+            cdef size_t size = git_odb_object_size(self._object)
+            return size
+
+    property type:
+        def __get__(GitObject self):
+            cdef unsigned int utype = git_odb_object_type(self._object)
+            return GitObjectType._from_uint(utype)
+
+    def __repr__(GitObject self):
+        return '<GitObject type={!r} size={!r}>'.format(self.type, self.size)
 
 
 @cython.internal
@@ -246,10 +329,10 @@ cdef class GitOid:
         length = len(py_string)
         oid._string = <char*>stdlib.malloc(length)
 
-        string = py_string
+        oid._string = py_string
         oid.length = length
         error = git_oid_fromstrn(cython.address(oid._my_oid),
-                                 <const_char_ptr>string, length)
+                                 <const_char*>oid._string, length)
         check_error(error)
         oid._oid = <const_git_oid*>cython.address(oid._my_oid)
         return oid
@@ -725,7 +808,7 @@ cdef class GitStatus:
             return (self._flags & self.IGNORED) == self.IGNORED
 
 
-cdef int _status_foreach_cb(const_char_ptr path,
+cdef int _status_foreach_cb(const_char *path,
                             unsigned int flags, void *payload):
     result = <object>payload
     py_path = <char*>path
