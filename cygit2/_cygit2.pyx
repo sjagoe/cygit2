@@ -623,19 +623,7 @@ cdef class EnumValue:
     def __repr__(EnumValue self):
         return self.name
 
-    def __or__(EnumValue self, EnumValue other):
-        return CompositeEnumValue(self, other)
-
-    def __ror__(EnumValue self, EnumValue other):
-        return CompositeEnumValue(other, self)
-
-    def __and__(EnumValue self, EnumValue other):
-        return CompositeEnumValue(self) & CompositeEnumValue(other)
-
-    def __rand__(EnumValue self, EnumValue other):
-        return CompositeEnumValue(other) & CompositeEnumValue(self)
-
-    def __richcmp__(EnumValue self, EnumValue other not None, int op):
+    def __richcmp__(EnumValue self not None, EnumValue other not None, int op):
         if op == 2: # ==
             return self.value == other.value
         elif op == 3: # !=
@@ -650,7 +638,7 @@ cdef class EnumValue:
             return not (self.value < other.value)
 
     def __hash__(EnumValue self):
-        return hash((self.name, self.value))
+        return hash(id(self.name))
 
     property name:
         def __get__(EnumValue self):
@@ -661,23 +649,43 @@ cdef class EnumValue:
             return self._value
 
 
-cdef class CompositeEnumValue(EnumValue):
+cdef class ComposableEnumValue(EnumValue):
+
+    def __or__(ComposableEnumValue self, ComposableEnumValue other):
+        return CompositeEnumValue(self, other)
+
+    def __ror__(ComposableEnumValue self, ComposableEnumValue other):
+        return CompositeEnumValue(other, self)
+
+    cdef _and(ComposableEnumValue self, ComposableEnumValue other):
+        _other = set(other.items)
+        this = set(self.items)
+        return CompositeEnumValue(*sorted(this & _other))
+
+    def __and__(ComposableEnumValue self, ComposableEnumValue other):
+        return self._and(other)
+
+    def __rand__(ComposableEnumValue self, ComposableEnumValue other):
+        return other._and(self)
+
+    property items:
+        def __get__(ComposableEnumValue self):
+            return (self,)
+
+
+cdef class CompositeEnumValue(ComposableEnumValue):
 
     cdef tuple _items
 
     def __init__(CompositeEnumValue self, *items):
         flatten = []
         for item in items:
-            if isinstance(item, CompositeEnumValue):
-                flatten.extend(item.items)
-            elif isinstance(item, EnumValue):
-                flatten.append(item)
+            if not isinstance(item, ComposableEnumValue):
+                raise TypeError(
+                    ('CompositeEnumValue arguments must all be of '
+                     'type \'ComposableEnumValue\': {!r}.').format(item))
+            flatten.extend(item.items)
         self._items = tuple(sorted(flatten))
-
-    def __and__(CompositeEnumValue self, EnumValue other):
-        _other = set(CompositeEnumValue(other).items)
-        this = set(self.items)
-        return CompositeEnumValue(*sorted(this & _other))
 
     property name:
         def __get__(CompositeEnumValue self):
@@ -685,8 +693,9 @@ cdef class CompositeEnumValue(EnumValue):
 
     property value:
         def __get__(CompositeEnumValue self):
-            value = 0
-            for i in self.items:
+            cdef ComposableEnumValue i
+            cdef int value = 0
+            for i in self._items:
                 value |= i.value
             return value
 
@@ -721,19 +730,30 @@ cdef EnumValue _GitStatus_from_uint(unsigned int flags):
 
 cdef class GitStatus:
 
-    CURRENT          = EnumValue('GitStatus.CURRENT', GIT_STATUS_CURRENT)
-    INDEX_NEW        = EnumValue('GitStatus.INDEX_NEW', GIT_STATUS_INDEX_NEW)
-    INDEX_MODIFIED   = EnumValue('GitStatus.INDEX_MODIFIED', GIT_STATUS_INDEX_MODIFIED)
-    INDEX_DELETED    = EnumValue('GitStatus.INDEX_DELETED', GIT_STATUS_INDEX_DELETED)
-    INDEX_RENAMED    = EnumValue('GitStatus.INDEX_RENAMED', GIT_STATUS_INDEX_RENAMED)
-    INDEX_TYPECHANGE = EnumValue('GitStatus.INDEX_TYPECHANGE', GIT_STATUS_INDEX_TYPECHANGE)
-    WT_NEW           = EnumValue('GitStatus.WT_NEW', GIT_STATUS_WT_NEW)
-    WT_MODIFIED      = EnumValue('GitStatus.WT_MODIFIED', GIT_STATUS_WT_MODIFIED)
-    WT_DELETED       = EnumValue('GitStatus.WT_DELETED', GIT_STATUS_WT_DELETED)
-    WT_TYPECHANGE    = EnumValue('GitStatus.WT_TYPECHANGE', GIT_STATUS_WT_TYPECHANGE)
-    IGNORED          = EnumValue('GitStatus.IGNORED', GIT_STATUS_IGNORED)
+    CURRENT          = ComposableEnumValue('GitStatus.CURRENT',
+                                           GIT_STATUS_CURRENT)
+    INDEX_NEW        = ComposableEnumValue('GitStatus.INDEX_NEW',
+                                           GIT_STATUS_INDEX_NEW)
+    INDEX_MODIFIED   = ComposableEnumValue('GitStatus.INDEX_MODIFIED',
+                                           GIT_STATUS_INDEX_MODIFIED)
+    INDEX_DELETED    = ComposableEnumValue('GitStatus.INDEX_DELETED',
+                                           GIT_STATUS_INDEX_DELETED)
+    INDEX_RENAMED    = ComposableEnumValue('GitStatus.INDEX_RENAMED',
+                                           GIT_STATUS_INDEX_RENAMED)
+    INDEX_TYPECHANGE = ComposableEnumValue('GitStatus.INDEX_TYPECHANGE',
+                                           GIT_STATUS_INDEX_TYPECHANGE)
+    WT_NEW           = ComposableEnumValue('GitStatus.WT_NEW',
+                                           GIT_STATUS_WT_NEW)
+    WT_MODIFIED      = ComposableEnumValue('GitStatus.WT_MODIFIED',
+                                           GIT_STATUS_WT_MODIFIED)
+    WT_DELETED       = ComposableEnumValue('GitStatus.WT_DELETED',
+                                           GIT_STATUS_WT_DELETED)
+    WT_TYPECHANGE    = ComposableEnumValue('GitStatus.WT_TYPECHANGE',
+                                           GIT_STATUS_WT_TYPECHANGE)
+    IGNORED          = ComposableEnumValue('GitStatus.IGNORED',
+                                           GIT_STATUS_IGNORED)
 
-    cdef EnumValue _flags
+    cdef ComposableEnumValue _flags
 
     @classmethod
     def _from_uint(cls, unsigned int flags):
@@ -742,7 +762,7 @@ cdef class GitStatus:
     cpdef unsigned int _to_uint(GitStatus self):
         return self._flags.value
 
-    def __init__(GitStatus self, EnumValue flags):
+    def __init__(GitStatus self, ComposableEnumValue flags):
         self._flags = flags
 
     def __repr__(GitStatus self):
