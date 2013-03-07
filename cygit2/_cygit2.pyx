@@ -220,8 +220,6 @@ cdef class GitOdbObject:
         def __get__(GitOdbObject self):
             cdef const_git_oid *oidp
             oidp = git_odb_object_id(self._object)
-            if oidp is NULL:
-                return None
             return make_oid(self, oidp)
 
     property data:
@@ -345,6 +343,8 @@ cdef class GitOid:
 
 
 cdef GitOid make_oid(object owner, const_git_oid *oidp):
+    if oidp is NULL:
+        return None
     cdef GitOid oid = GitOid()
     oid._owner = owner
     oid._oid = oidp
@@ -366,21 +366,13 @@ cdef class RefLogEntry:
     property id_new:
         def __get__(RefLogEntry self):
             cdef const_git_oid *oidp
-
             oidp = git_reflog_entry_id_new(self._entry)
-            if oidp is NULL:
-                return None
-
             return make_oid(self, oidp)
 
     property id_old:
         def __get__(RefLogEntry self):
             cdef const_git_oid *oidp
-
             oidp = git_reflog_entry_id_old(self._entry)
-            if oidp is NULL:
-                return None
-
             return make_oid(self, oidp)
 
     property message:
@@ -456,8 +448,6 @@ cdef class Reference:
         def __get__(Reference self):
             cdef const_git_oid *oidp
             oidp = git_reference_target(self._reference)
-            if oidp is NULL:
-                return None
             return make_oid(self, oidp)
 
 
