@@ -301,12 +301,14 @@ cdef class GitOid:
 
     def __cinit__(GitOid self):
         self._oid = NULL
+        self._string = NULL
         self.length = 40
         self._owner = None
 
     def _dealloc__(GitOid self):
         self._oid = NULL
-        if self._owner is None:
+        self._owner = None
+        if self._string is not NULL:
             stdlib.free(self._string)
 
     cdef format(GitOid self):
