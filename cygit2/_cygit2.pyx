@@ -149,6 +149,39 @@ cdef check_error(int error):
             raise LibGit2Error('Unknown error')
 
 
+cdef class GitObject:
+
+    cdef git_odb_object *_object
+
+    def __cinit__(GitObject self):
+        self._object = NULL
+
+    def __dealloc__(GitObject self):
+        if self._object is not NULL:
+            git_odb_object_free(self._object)
+
+
+@cython.internal
+cdef class GitOdb:
+
+    cdef git_odb *_odb
+
+    def __cinit__(GitOdb self):
+        self._odb = NULL
+
+    def __dealloc__(GitOdb self):
+        if self._odb is not NULL:
+            git_odb_free(self._odb)
+
+    cdef read_prefix(GitOdb self, GitOid oid):
+        cdef int error
+        obj = GitObject()
+        error = git_odb_read_prefix(cython.address(obj._object), self._odb,
+                                    oid._oid, oid.length)
+        check_error(error)
+        return obj
+
+
 cdef class Config:
 
     cdef git_config *_config
@@ -179,13 +212,13 @@ cdef class GitOid:
 
     cdef char *_string
 
-    cdef int _length
+    cdef readonly int length
 
     cdef object _owner
 
     def __cinit__(GitOid self):
         self._oid = NULL
-        self._length = 40
+        self.length = 40
         self._owner = None
 
     def _dealloc__(GitOid self):
@@ -214,7 +247,7 @@ cdef class GitOid:
         oid._string = <char*>stdlib.malloc(length)
 
         string = py_string
-        oid._length = length
+        oid.length = length
         error = git_oid_fromstrn(cython.address(oid._my_oid),
                                  <const_char_ptr>string, length)
         check_error(error)
@@ -223,7 +256,7 @@ cdef class GitOid:
 
     property hex:
         def __get__(GitOid self):
-            return self.format()[:self._length]
+            return self.format()[:self.length]
 
 
 cdef GitOid make_oid(object owner, const_git_oid *oidp):
@@ -359,6 +392,13 @@ cdef class Repository:
             git_repository_free(self._repository)
             self._repository = NULL
 
+    cdef odb(Repository self):
+        cdef int error
+        odb = GitOdb()
+        error = git_repository_odb(cython.address(odb._odb), self._repository)
+        check_error(error)
+        return odb
+
     @classmethod
     def open(cls, path):
         cdef int error
@@ -416,6 +456,10 @@ cdef class Repository:
             return tuple(arr.strings[index] for index in xrange(arr.count))
         finally:
             git_strarray_free(cython.address(arr))
+
+    def read(Repository self, GitOid oid):
+        odb = self.odb()
+        return odb.read_prefix(oid)
 
     def status_ext(Repository self, include_untracked=True,
                    include_ignored=True, include_unmodified=False,
