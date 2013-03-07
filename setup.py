@@ -8,7 +8,6 @@ ext_modules = [
         [
             'cygit2/_cygit2.pyx',
             'cygit2/_git2.pxd',
-            'cygit2/_types.pxd',
         ],
         libraries=['git2'],
     ),
