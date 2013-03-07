@@ -76,9 +76,9 @@ class TestRepositoryWithContents(Cygit2RepositoryFixture):
         self.assertIn('refs/heads/master', self.repo.list_refs())
         self.assertIn('refs/remotes/origin/master', self.repo.list_refs())
 
-    def test_foo(self):
+    def test_read_raw_object(self):
         from cygit2._cygit2 import GitOid
-        oid = GitOid.from_string('090e6fa301ead6e04cae321ae1d2d9001eafe73f')
+        oid = GitOid.from_string(self.commits[0])
         # FIXME: insufficient test
         self.repo.read(oid)
 
