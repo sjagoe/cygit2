@@ -258,7 +258,7 @@ cdef class GitOdb:
 
     cdef GitObject read_prefix(GitOdb self, GitOid oid):
         cdef int error
-        obj = GitObject()
+        cdef GitObject obj = GitObject()
         error = git_odb_read_prefix(cython.address(obj._object), self._odb,
                                     oid._oid, oid.length)
         check_error(error)
@@ -324,7 +324,7 @@ cdef class GitOid:
     def from_string(cls, py_string):
         cdef int error
         cdef size_t length
-        oid = GitOid()
+        cdef GitOid oid = GitOid()
 
         if isinstance(py_string, unicode):
             py_string = py_string.encode('ascii')
@@ -345,7 +345,7 @@ cdef class GitOid:
 
 
 cdef GitOid make_oid(object owner, const_git_oid *oidp):
-    oid = GitOid()
+    cdef GitOid oid = GitOid()
     oid._owner = owner
     oid._oid = oidp
     return oid
@@ -477,9 +477,9 @@ cdef class Repository:
             git_repository_free(self._repository)
             self._repository = NULL
 
-    cdef odb(Repository self):
+    cdef GitOdb odb(Repository self):
         cdef int error
-        odb = GitOdb()
+        cdef GitOdb odb = GitOdb()
         error = git_repository_odb(cython.address(odb._odb), self._repository)
         check_error(error)
         return odb
@@ -487,7 +487,7 @@ cdef class Repository:
     @classmethod
     def open(cls, path):
         cdef int error
-        repo = Repository()
+        cdef Repository repo = Repository()
         error = git_repository_open(cython.address(repo._repository), path)
         check_error(error)
         assert_repository(repo)
@@ -496,7 +496,7 @@ cdef class Repository:
     @classmethod
     def init(cls, path, bare=False):
         cdef int error
-        repo = Repository()
+        cdef Repository repo = Repository()
         error = git_repository_init(cython.address(repo._repository), path, bare)
         check_error(error)
         assert_repository(repo)
@@ -505,7 +505,7 @@ cdef class Repository:
     @classmethod
     def clone(cls, url, path):
         cdef int error
-        repo = Repository()
+        cdef Repository repo = Repository()
         error = git_clone(cython.address(repo._repository), url, path, NULL)
         check_error(error)
         assert_repository(repo)
@@ -514,7 +514,7 @@ cdef class Repository:
     def config(Repository self):
         cdef int error
         assert_repository(self)
-        conf = Config()
+        cdef Config conf = Config()
         error = git_repository_config(cython.address(conf._config),
                                       self._repository)
         check_error(error)
@@ -525,20 +525,24 @@ cdef class Repository:
             raise LibGit2ReferenceError('Invalid reference name {!r}'.format(
                 name))
         cdef int error
-        ref = Reference()
+        cdef Reference ref = Reference()
         error = git_reference_lookup(cython.address(ref._reference),
                                      self._repository, name)
         check_error(error)
         return ref
 
     def list_refs(Repository self):
+        cdef unsigned int index
         cdef int error
         cdef git_strarray arr
         error = git_reference_list(cython.address(arr), self._repository,
                                    GIT_REF_LISTALL)
         check_error(error)
         try:
-            return tuple(arr.strings[index] for index in xrange(arr.count))
+            items = []
+            for index from 0 <= index < arr.count:
+                items.append(arr.strings[index])
+            return tuple(items)
         finally:
             git_strarray_free(cython.address(arr))
 
