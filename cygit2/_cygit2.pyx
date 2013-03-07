@@ -173,7 +173,7 @@ cdef class GitOdb:
         if self._odb is not NULL:
             git_odb_free(self._odb)
 
-    cdef read_prefix(GitOdb self, GitOid oid):
+    def read_prefix(GitOdb self, GitOid oid):
         cdef int error
         obj = GitObject()
         error = git_odb_read_prefix(cython.address(obj._object), self._odb,
