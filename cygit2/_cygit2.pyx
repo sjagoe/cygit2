@@ -9,12 +9,15 @@ from _git2 cimport \
     git_repository, git_repository_open, git_repository_path, \
     git_repository_init, git_repository_free, git_repository_config, \
     \
+    git_odb, git_repository_odb, git_odb_read_prefix, git_odb_free, \
+    git_odb_object, git_odb_object_free, \
+    \
     git_config, git_config_free, \
     const_git_config_entry, git_config_get_entry, \
     \
     git_strarray, git_strarray_free, \
     \
-    const_git_oid, git_oid_fmt, \
+    git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, \
     \
     git_reference, git_reference_free, git_reference_lookup, \
     git_reference_name, git_reference_target, git_reference_reload, \
@@ -26,8 +29,6 @@ from _git2 cimport \
     git_reflog, git_reflog_free, git_reflog_read, git_reflog_entrycount, \
     const_git_reflog_entry, git_reflog_entry_byindex, git_reflog_entry_id_new, \
     git_reflog_entry_id_old, git_reflog_entry_message, \
-    \
-    GIT_OK, \
     \
     git_status_t, git_status_foreach, git_status_foreach_ext, \
     git_status_options, \
@@ -77,7 +78,9 @@ from _git2 cimport \
     GITERR_STASH, \
     GITERR_CHECKOUT, \
     GITERR_FETCHHEAD, \
-    GITERR_MERGE
+    GITERR_MERGE, \
+    \
+    GIT_OK
 
 
 class LibGit2Error(Exception): pass
@@ -172,15 +175,25 @@ cdef class GitOid:
 
     cdef const_git_oid *_oid
 
+    cdef git_oid _my_oid
+
+    cdef char *_string
+
+    cdef int _length
+
     cdef object _owner
 
     def __cinit__(GitOid self):
         self._oid = NULL
+        self._length = 40
+        self._owner = None
 
-    def __init__(GitOid self, owner):
-        self._owner = owner
+    def _dealloc__(GitOid self):
+        self._oid = NULL
+        if self._owner is None:
+            stdlib.free(self._string)
 
-    def format(GitOid self):
+    cdef format(GitOid self):
         cdef char *hex_str = <char*>stdlib.malloc(sizeof(char)*40)
         git_oid_fmt(hex_str, self._oid)
         try:
@@ -188,6 +201,36 @@ cdef class GitOid:
         finally:
             stdlib.free(hex_str)
         return py_hex_str.decode('ascii')
+
+    @classmethod
+    def from_string(cls, py_string):
+        cdef int error
+        cdef size_t length
+        oid = GitOid()
+
+        if isinstance(py_string, unicode):
+            py_string = py_string.encode('ascii')
+        length = len(py_string)
+        oid._string = <char*>stdlib.malloc(length)
+
+        string = py_string
+        oid._length = length
+        error = git_oid_fromstrn(cython.address(oid._my_oid),
+                                 <const_char_ptr>string, length)
+        check_error(error)
+        oid._oid = <const_git_oid*>cython.address(oid._my_oid)
+        return oid
+
+    property hex:
+        def __get__(GitOid self):
+            return self.format()[:self._length]
+
+
+cdef GitOid make_oid(object owner, const_git_oid *oidp):
+    oid = GitOid()
+    oid._owner = owner
+    oid._oid = oidp
+    return oid
 
 
 cdef class RefLogEntry:
@@ -210,10 +253,7 @@ cdef class RefLogEntry:
             if oidp is NULL:
                 return None
 
-            oid = GitOid(self)
-            oid._oid = oidp
-
-            return oid
+            return make_oid(self, oidp)
 
     property id_old:
         def __get__(RefLogEntry self):
@@ -223,10 +263,7 @@ cdef class RefLogEntry:
             if oidp is NULL:
                 return None
 
-            oid = GitOid(self)
-            oid._oid = oidp
-
-            return oid
+            return make_oid(self, oidp)
 
     property message:
         def __get__(RefLogEntry self):
@@ -303,9 +340,7 @@ cdef class Reference:
             oidp = git_reference_target(self._reference)
             if oidp is NULL:
                 return None
-            oid = GitOid(self)
-            oid._oid = oidp
-            return oid
+            return make_oid(self, oidp)
 
 
 cdef class Repository:
