@@ -4,15 +4,16 @@ import cython
 
 from libc.string cimport const_char
 
-from _git2 cimport \
+from _types cimport \
+    const_git_signature, \
+    git_commit, \
+    git_config, \
+    git_odb, \
+    git_repository, \
     git_time_t, \
-    \
-    git_repository, git_repository_open, git_repository_path, \
-    git_repository_init, git_repository_free, git_repository_config, \
-    \
-    git_odb, git_repository_odb, git_odb_read_prefix, git_odb_free, \
-    git_odb_object, git_odb_object_free, git_odb_object_id, \
-    git_odb_object_data, git_odb_object_size, git_odb_object_type, \
+    git_reference, \
+    git_reflog, \
+    const_git_reflog_entry, \
     \
     GIT_OBJ_ANY, \
     GIT_OBJ_BAD, \
@@ -24,33 +25,50 @@ from _git2 cimport \
     GIT_OBJ__EXT2, \
     GIT_OBJ_OFS_DELTA, \
     GIT_OBJ_REF_DELTA, \
-    \
-    git_commit, git_commit_free, git_commit_lookup_prefix, git_commit_id, \
+    GIT_REF_LISTALL
+
+from _strarray cimport git_strarray, git_strarray_free
+
+from _repository cimport \
+    git_repository_odb, git_repository_open, git_repository_path, \
+    git_repository_init, git_repository_free, git_repository_config
+
+from _odb cimport \
+    git_odb_read_prefix, git_odb_free, \
+    git_odb_object, git_odb_object_free, git_odb_object_id, \
+    git_odb_object_data, git_odb_object_size, git_odb_object_type
+
+from _commit cimport \
+    git_commit_free, git_commit_lookup_prefix, git_commit_id, \
     git_commit_message_encoding, git_commit_message, git_commit_time, \
     git_commit_time_offset, git_commit_committer, git_commit_author, \
     git_commit_tree, git_commit_tree_id, git_commit_parentcount, \
-    git_commit_parent, git_commit_parent_id, git_commit_nth_gen_ancestor, \
-    \
-    const_git_signature, git_signature_free, \
-    \
-    git_config, git_config_free, \
-    const_git_config_entry, git_config_get_entry, \
-    \
-    git_strarray, git_strarray_free, \
-    \
-    git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, \
-    \
-    git_reference, git_reference_free, git_reference_lookup, \
+    git_commit_parent, git_commit_parent_id, git_commit_nth_gen_ancestor
+
+from _signature cimport \
+    git_signature_free
+
+from _config cimport \
+    git_config_free, \
+    const_git_config_entry, git_config_get_entry
+
+from _oid cimport \
+    git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn
+
+from _refs cimport \
+    git_reference_free, git_reference_lookup, \
     git_reference_name, git_reference_target, git_reference_cmp, \
     git_reference_has_log, git_reference_list, git_reference_is_valid_name, \
-    git_reference_is_branch, git_reference_is_remote, \
-    GIT_REF_LISTALL, \
-    \
-    git_reflog, git_reflog_free, git_reflog_read, git_reflog_entrycount, \
-    const_git_reflog_entry, git_reflog_entry_byindex, git_reflog_entry_id_new, \
-    git_reflog_entry_id_old, git_reflog_entry_message, \
-    \
-    git_status_t, git_status_foreach, git_status_foreach_ext, \
+    git_reference_is_branch, git_reference_is_remote
+
+from _reflog cimport \
+    git_reflog_free, git_reflog_read, git_reflog_entrycount, \
+    git_reflog_entry_byindex, git_reflog_entry_id_new, \
+    git_reflog_entry_id_old, git_reflog_entry_message
+
+from _status cimport \
+    git_status_t, \
+    git_status_foreach, git_status_foreach_ext, \
     git_status_options, \
     \
     GIT_STATUS_CURRENT, \
@@ -72,10 +90,11 @@ from _git2 cimport \
     GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS, \
     GIT_STATUS_OPT_DISABLE_PATHSPEC_MATCH, \
     GIT_STATUS_SHOW_INDEX_THEN_WORKDIR, \
-    GIT_STATUS_OPTIONS_VERSION, \
-    \
-    git_clone, \
-    \
+    GIT_STATUS_OPTIONS_VERSION
+
+from _clone cimport git_clone
+
+from _errors cimport \
     const_git_error, giterr_last, \
     GITERR_NOMEMORY, \
     GITERR_OS, \
