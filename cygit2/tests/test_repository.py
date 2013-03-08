@@ -39,14 +39,17 @@ class TestEmptyRepository(RepositoryFixture):
         source_repo = Repository.init(source_repo_dir, True)
         self.assertEqual(os.path.abspath(source_repo.path),
                          os.path.abspath(source_repo_dir))
-        dest_repo_dir = os.path.join(self.empty_dir, 'dest')
+        dest_repo_dir = os.path.join(self.empty_dir, 'dest', '.git')
         if source_repo_dir.startswith('/'):
             uri = 'file://{}'.format(source_repo_dir)
         else:
             uri = 'file:///{}'.format(source_repo_dir)
         dest = Repository.clone(uri, dest_repo_dir)
         self.assertEqual(os.path.abspath(dest.path),
-                         os.path.abspath(os.path.join(dest_repo_dir, '.git')))
+                         os.path.abspath(dest_repo_dir))
+        self.assertEqual(
+            os.listdir(os.path.dirname(os.path.abspath(dest.path))),
+            ['.git'])
 
     def test_lookup_ref(self):
         # This should raise if there is an error...
@@ -120,6 +123,29 @@ class TestRepositoryWithContents(Cygit2RepositoryFixture):
         ref = self.repo.lookup_ref('refs/heads/master')
         with self.assertRaises(LibGit2InvalidError):
             self.repo.lookup_object(ref.oid, GitObjectType.TREE)
+
+
+class TestRepositoryClone(Cygit2RepositoryFixture):
+
+    def setUp(self):
+        super(TestRepositoryClone, self).setUp()
+        self.clone_dir = tempfile.mkdtemp(suffix='-tmp', prefix='cygit2-')
+
+    def tearDown(self):
+        shutil.rmtree(self.clone_dir)
+        super(TestRepositoryClone, self).tearDown()
+
+    def test_repository_clone(self):
+        source_repo_dir = os.path.abspath(self.repo.path)
+        dest_repo_dir = os.path.join(self.clone_dir, '.git')
+        if source_repo_dir.startswith('/'):
+            uri = 'file://{}'.format(source_repo_dir)
+        else:
+            uri = 'file:///{}'.format(source_repo_dir)
+        # dest = Repository.clone(uri, dest_repo_dir)
+        # self.assertEqual(os.path.abspath(dest.path),
+        #                  os.path.abspath(dest_repo_dir))
+        # print os.listdir(os.path.dirname(os.path.abspath(dest.path)))
 
 
 if __name__ == '__main__':

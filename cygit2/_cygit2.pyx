@@ -632,11 +632,22 @@ cdef class GitTree:
             return make_oid(self, oidp)
 
 
-cdef git_clone_options make_clone_options():
+cdef git_clone_options make_clone_options(bytes push_url):
     cdef git_clone_options opts
     opts.version = GIT_CLONE_OPTIONS_VERSION
     opts.checkout_opts.version = GIT_CHECKOUT_OPTS_VERSION
     opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE_CREATE
+
+    opts.remote_name = b'origin'
+    opts.pushurl = push_url
+    opts.fetch_spec = NULL
+    opts.push_spec = NULL
+
+    opts.cred_acquire_payload = NULL
+    opts.checkout_branch = b'master'
+
+    opts.remote_callbacks = NULL
+
     # opts.remote_callbacks = <git_remote_callbacks*>stdlib.malloc(
     #     sizeof(git_remote_callbacks))
     # opts.remote_callbacks.version = GIT_REMOTE_CALLBACKS_VERSION
@@ -701,7 +712,7 @@ cdef class Repository:
         cdef bytes burl = _to_bytes(url, u"ascii")
         cdef bytes bpath = _to_bytes(path)
 
-        cdef git_clone_options opts = make_clone_options()
+        cdef git_clone_options opts = make_clone_options(burl)
         cdef Repository repo = Repository()
         error = git_clone(cython.address(repo._repository), burl, bpath, &opts)
         check_error(error)
