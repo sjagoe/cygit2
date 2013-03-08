@@ -9,10 +9,11 @@ from _transport cimport \
     git_transport
 
 from _types cimport \
-    git_remote_callbacks, \
     git_repository
 
-from _remote cimport git_remote_autotag_option_t
+from _remote cimport \
+    git_remote_autotag_option_t, \
+    git_remote_callbacks
 
 
 cdef extern from "git2.h":

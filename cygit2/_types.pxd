@@ -198,11 +198,6 @@ cdef extern from "git2.h":
     cdef struct git_remote_head:
         pass
 
-    ctypedef git_remote_callbacks git_remote_callbacks
-
-    cdef struct git_remote_callbacks:
-        pass
-
     cdef struct imaxdiv_t:
         long int quot
         long int rem

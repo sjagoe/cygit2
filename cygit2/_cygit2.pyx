@@ -17,7 +17,6 @@ from _types cimport \
     const_git_reflog_entry, \
     git_tree, \
     git_otype, \
-    git_remote_callbacks, \
     \
     GIT_OBJ_ANY, \
     GIT_OBJ_BAD, \
@@ -106,7 +105,9 @@ from _checkout cimport \
     GIT_CHECKOUT_SAFE_CREATE, \
     GIT_CHECKOUT_OPTS_VERSION
 
-from _remote cimport GIT_REMOTE_CALLBACKS_VERSION
+from _remote cimport \
+    GIT_REMOTE_CALLBACKS_VERSION, \
+    git_remote_callbacks
 
 from _object cimport \
     git_object_lookup_prefix, \
@@ -646,15 +647,13 @@ cdef git_clone_options make_clone_options(bytes push_url):
     opts.cred_acquire_payload = NULL
     opts.checkout_branch = b'master'
 
-    opts.remote_callbacks = NULL
-
-    # opts.remote_callbacks = <git_remote_callbacks*>stdlib.malloc(
-    #     sizeof(git_remote_callbacks))
-    # opts.remote_callbacks.version = GIT_REMOTE_CALLBACKS_VERSION
-    # opts.remote_callbacks.progress = NULL
-    # opts.remote_callbacks.completion = NULL
-    # opts.remote_callbacks.update_tips = NULL
-    # opts.remote_callbacks.payload = NULL
+    opts.remote_callbacks = <git_remote_callbacks*>stdlib.malloc(
+        sizeof(git_remote_callbacks))
+    opts.remote_callbacks.version = GIT_REMOTE_CALLBACKS_VERSION
+    opts.remote_callbacks.progress = NULL
+    opts.remote_callbacks.completion = NULL
+    opts.remote_callbacks.update_tips = NULL
+    opts.remote_callbacks.payload = NULL
     # print <unsigned long>opts.remote_callbacks.progress
     # print <unsigned long>opts.remote_callbacks.completion
     # print <unsigned long>opts.remote_callbacks.update_tips
@@ -715,6 +714,7 @@ cdef class Repository:
         cdef git_clone_options opts = make_clone_options(burl)
         cdef Repository repo = Repository()
         error = git_clone(cython.address(repo._repository), burl, bpath, &opts)
+        stdlib.free(opts.remote_callbacks)
         check_error(error)
         assert_repository(repo)
         return repo
