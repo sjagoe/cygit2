@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 #
-# Copyright 2010-2012 The pygit2 contributors
+# Copyright 2010-2013 The pygit2 contributors
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2,
@@ -83,6 +83,11 @@ class NoRepoTestCase(unittest.TestCase):
         except:
             self.assertEqual(exc_class, sys.exc_info()[0])
 
+    def assertAll(self, func, entries):
+        return self.assertTrue(all(func(x) for x in entries))
+
+    def assertAny(self, func, entries):
+        return self.assertTrue(any(func(x) for x in entries))
 
     def assertRaisesWithArg(self, exc_class, arg, func, *args, **kwargs):
         try:
