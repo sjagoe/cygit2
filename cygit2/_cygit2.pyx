@@ -99,6 +99,7 @@ from _status cimport \
 from _clone cimport git_clone
 
 
+include "_encoding.pxi"
 include "_error.pxi"
 include "_enum.pxi"
 
@@ -277,7 +278,7 @@ cdef class GitCommit:
                 return None
             encoding = self.encoding
             if encoding is None:
-                encoding = 'UTF-8' # FIXME
+                encoding = DEFAULT_ENCODING
             return message.decode(encoding)
 
     property _message:
@@ -375,14 +376,15 @@ cdef class Config:
             git_config_free(self._config)
 
     def get_entry(self, name):
+        cdef bytes bname = _to_bytes(name)
         cdef int error
         cdef const_git_config_entry *entry
         error = git_config_get_entry(
-            cython.address(entry), self._config, name)
+            cython.address(entry), self._config, bname)
         check_error(error)
         value = <char*>entry.value
         level = entry.level
-        return level, value
+        return level, value.decode(DEFAULT_ENCODING)
 
 
 cdef class GitOid:
@@ -507,8 +509,20 @@ cdef class Reference:
         if self._reference is not NULL:
             git_reference_free(self._reference)
 
-    def __cmp__(Reference self, Reference other):
-        return git_reference_cmp(self._reference, other._reference)
+    def __richcmp__(Reference self, Reference other, int op):
+        cdef int cmp_ = git_reference_cmp(self._reference, other._reference)
+        if op == 2: # ==
+            return cmp_ == 0
+        elif op == 3: # !=
+            return cmp_ != 0
+        elif op == 0: # <
+            return cmp_ < 0
+        elif op == 1: # <=
+            return cmp_ <= 0
+        elif op == 4: # >
+            return cmp_ > 0
+        elif op == 5: # >=
+            return cmp_ >= 0
 
     def has_log(Reference self):
         cdef int code
@@ -546,7 +560,8 @@ cdef class Reference:
 
     property name:
         def __get__(Reference self):
-            return git_reference_name(self._reference)
+            cdef bytes py_string = git_reference_name(self._reference)
+            return py_string.decode(DEFAULT_ENCODING)
 
     property oid:
         def __get__(Reference self):
@@ -592,27 +607,32 @@ cdef class Repository:
 
     @classmethod
     def open(cls, path):
+        cdef bytes bpath = _to_bytes(path)
         cdef int error
         cdef Repository repo = Repository()
-        error = git_repository_open(cython.address(repo._repository), path)
+        error = git_repository_open(cython.address(repo._repository), bpath)
         check_error(error)
         assert_repository(repo)
         return repo
 
     @classmethod
     def init(cls, path, bare=False):
+        cdef bytes bpath = _to_bytes(path)
         cdef int error
         cdef Repository repo = Repository()
-        error = git_repository_init(cython.address(repo._repository), path, bare)
+        error = git_repository_init(cython.address(repo._repository), bpath,
+                                    bare)
         check_error(error)
         assert_repository(repo)
         return repo
 
     @classmethod
     def clone(cls, url, path):
+        cdef bytes burl = _to_bytes(url, u"ascii")
+        cdef bytes bpath = _to_bytes(path)
         cdef int error
         cdef Repository repo = Repository()
-        error = git_clone(cython.address(repo._repository), url, path, NULL)
+        error = git_clone(cython.address(repo._repository), burl, bpath, NULL)
         check_error(error)
         assert_repository(repo)
         return repo
@@ -627,13 +647,14 @@ cdef class Repository:
         return conf
 
     def lookup_ref(Repository self, name):
-        if git_reference_is_valid_name(name) == 0:
+        cdef bytes bname = _to_bytes(name)
+        if git_reference_is_valid_name(bname) == 0:
             raise LibGit2ReferenceError('Invalid reference name {!r}'.format(
                 name))
         cdef int error
         cdef Reference ref = Reference()
         error = git_reference_lookup(cython.address(ref._reference),
-                                     self._repository, name)
+                                     self._repository, bname)
         check_error(error)
         return ref
 
@@ -657,13 +678,15 @@ cdef class Repository:
         cdef unsigned int index
         cdef int error
         cdef git_strarray arr
+        cdef bytes py_bytes
         error = git_reference_list(cython.address(arr), self._repository,
                                    GIT_REF_LISTALL)
         check_error(error)
         try:
             items = []
             for index from 0 <= index < arr.count:
-                items.append(arr.strings[index])
+                py_bytes = arr.strings[index]
+                items.append(py_bytes.decode(DEFAULT_ENCODING))
             return tuple(items)
         finally:
             git_strarray_free(cython.address(arr))
@@ -705,7 +728,7 @@ cdef class Repository:
         try:
             if pathspec.strings is not NULL:
                 for index, string in enumerate(paths):
-                    py_string = string
+                    py_string = _to_bytes(string)
                     pathspec.strings[index] = py_string
                 pathspec.count = len(paths)
 
@@ -730,7 +753,8 @@ cdef class Repository:
 
     property path:
         def __get__(Repository self):
-            return git_repository_path(self._repository)
+            cdef bytes py_string = git_repository_path(self._repository)
+            return py_string.decode(DEFAULT_ENCODING)
 
 
 cdef ComposableEnumValue _GitStatus_from_uint(unsigned int flags):
@@ -866,6 +890,6 @@ cdef class GitStatus:
 cdef int _status_foreach_cb(const_char *path,
                             unsigned int flags, void *payload):
     result = <object>payload
-    py_path = <char*>path
-    result[py_path] = GitStatus(_GitStatus_from_uint(flags))
+    cdef bytes py_path = <char*>path
+    result[py_path.decode(DEFAULT_ENCODING)] = GitStatus(_GitStatus_from_uint(flags))
     return GIT_OK

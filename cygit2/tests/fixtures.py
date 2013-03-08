@@ -60,7 +60,7 @@ cd {path} {{sep}} \
 git log --pretty="%H"
 '''.format(path=path)
     stdout = check_output(_format_command(command), shell=True)
-    return stdout.strip().split()
+    return stdout.decode('ascii').strip().split()
 
 
 def _git_init(path):

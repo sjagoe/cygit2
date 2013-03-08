@@ -1,9 +1,6 @@
-import os
-import shutil
-import tempfile
 import unittest
 
-from cygit2._cygit2 import Repository, LibGit2ReferenceError
+from cygit2._cygit2 import LibGit2ReferenceError
 
 from cygit2.tests.fixtures import RepositoryFixture, Cygit2RepositoryFixture
 

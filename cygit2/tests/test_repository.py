@@ -54,14 +54,14 @@ class TestEmptyRepository(RepositoryFixture):
         repo = Repository.init(self.empty_dir)
         self.assertEqual(repo.status(), {})
         with open(os.path.join(self.empty_dir, 'file'), 'wb') as fh:
-            fh.write('contents')
+            fh.write(b'contents')
         self.assertEqual(repo.status(),
                          {'file': GitStatus(GitStatus.WT_NEW)})
 
     def test_status_ext(self):
         repo = Repository.init(self.empty_dir)
         with open(os.path.join(self.empty_dir, 'file'), 'wb') as fh:
-            fh.write('contents')
+            fh.write(b'contents')
         self.assertEqual(repo.status_ext(),
                          {'file': GitStatus(GitStatus.WT_NEW)})
         self.assertEqual(repo.status_ext(include_untracked=False), {})

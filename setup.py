@@ -11,6 +11,7 @@ ext_modules = [
             # Includes
             'cygit2/_error.pxi',
             'cygit2/_enum.pxi',
+            'cygit2/_encoding.pxi',
 
             # Definitions
             'cygit2/_attr.pxd',
