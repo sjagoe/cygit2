@@ -23,4 +23,4 @@ Build with::
 
 Alternatively you can set the environment variables `LIBGIT2` and `LIBGIT2_LIB`::
 
-    LIBGIT2=../libgit2 LIBGIT2_LIB=../libgit2/build/ python setup.py build_ext -i
+    LIBGIT2=../libgit2 LIBGIT2_LIB=../libgit2/bin python setup.py build_ext -i
