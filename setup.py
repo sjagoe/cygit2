@@ -12,7 +12,7 @@ if libgit2_path is None:
     else:
         libgit2_path = '/usr/local'
 
-libgit2_bin = os.path.join(libgit2_path, 'bin')
+libgit2_bin = os.path.join(libgit2_path, 'build')
 libgit2_include = os.path.join(libgit2_path, 'include')
 libgit2_lib = os.getenv('LIBGIT2_LIB', os.path.join(libgit2_path, 'lib'))
 

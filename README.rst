@@ -15,12 +15,12 @@ Building
 ========
 
 This assumes that ``libgit2`` has already been built in ``../libgit2`` and
-that the ``libgit2`` binaries are in ``../libgit2/bin``
+that the ``libgit2`` binaries are in ``../libgit2/build``
 
 Build with::
 
-  python setup.py build_ext -i -I ../libgit2/include -L../libgit2/bin -lgit2
+  python setup.py build_ext -i -I ../libgit2/include -L../libgit2/build -lgit2
 
 Alternatively you can set the environment variables `LIBGIT2` and `LIBGIT2_LIB`::
 
-    LIBGIT2=../libgit2 LIBGIT2_LIB=../libgit2/bin python setup.py build_ext -i
+    LIBGIT2=../libgit2 LIBGIT2_LIB=../libgit2/build python setup.py build_ext -i
