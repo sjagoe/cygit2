@@ -7,6 +7,12 @@ ext_modules = [
         'cygit2._cygit2',
         [
             'cygit2/_cygit2.pyx',
+
+            # Includes
+            'cygit2/_error.pxi',
+            'cygit2/_enum.pxi',
+
+            # Definitions
             'cygit2/_attr.pxd',
             'cygit2/_blob.pxd',
             'cygit2/_branch.pxd',
