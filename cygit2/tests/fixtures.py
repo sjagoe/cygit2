@@ -1,6 +1,7 @@
 from subprocess import check_call, check_output
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -41,25 +42,32 @@ class RepositoryFixture(unittest.TestCase):
         shutil.rmtree(self.repo_dir, onerror=onerror)
 
 
+def _format_command(command):
+    if sys.platform == 'win32':
+        return command.format(sep='&')
+    return command.format(sep=';')
+
+
 def _call_git(command):
     with open(os.devnull, 'w') as devnull:
-        check_call(command, stdout=devnull, stderr=devnull, shell=True)
+        check_call(_format_command(command), stdout=devnull, stderr=devnull,
+                   shell=True)
 
 
 def _git_get_commit_ids(path):
     command = '''\
-cd {path}; \
+cd {path} {{sep}} \
 git log --pretty="%H"
 '''.format(path=path)
-    stdout = check_output(command, shell=True)
+    stdout = check_output(_format_command(command), shell=True)
     return stdout.strip().split()
 
 
 def _git_init(path):
     command = '''\
-git init {path}; \
-cd {path}; \
-git config user.name "Test User"; \
+git init {path} {{sep}} \
+cd {path} {{sep}} \
+git config user.name "Test User" {{sep}} \
 git config user.email "test@users.invalid"
 '''.format(path=path)
     _call_git(command)
@@ -67,32 +75,32 @@ git config user.email "test@users.invalid"
 
 def _git_add_all(path):
     command = '''\
-cd {path}; \
-git add .; \
+cd {path} {{sep}} \
+git add . \
 '''.format(path=path)
     _call_git(command)
 
 
 def _git_commit(path, message):
     command = '''\
-cd {path}; \
-git commit --author="Other User <other@users.invalid>" -m "{message}"; \
+cd {path} {{sep}} \
+git commit --author="Other User <other@users.invalid>" -m "{message}" \
 '''.format(path=path, message=message)
     _call_git(command)
 
 
 def _git_remote_add(path, name, target):
     command = '''\
-cd {path}; \
-git remote add "{name}" "target"; \
+cd {path} {{sep}} \
+git remote add "{name}" "target" \
 '''.format(path=path, name=name, target=target)
     _call_git(command)
 
 
 def _git_update_ref(path, ref, sha):
     command = '''\
-cd {path}; \
-git update-ref "{ref}" "{sha}"; \
+cd {path} {{sep}} \
+git update-ref "{ref}" "{sha}" \
 '''.format(path=path, ref=ref, sha=sha)
     _call_git(command)
 

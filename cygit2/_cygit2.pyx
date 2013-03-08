@@ -68,7 +68,7 @@ from _reflog cimport \
     git_reflog_entry_id_old, git_reflog_entry_message
 
 from _tree cimport \
-    git_tree_free, git_tree_lookup, \
+    git_tree_free, git_tree_lookup_prefix
 
 from _status cimport \
     git_status_t, \
@@ -405,7 +405,7 @@ cdef class GitCommit:
         def __get__(GitCommit self):
             raise NotImplementedError() # git_commit_tree
 
-    property tree_Id:
+    property tree_id:
         def __get__(GitCommit self):
             cdef const_git_oid *oidp
             oidp = git_commit_tree_id(self._commit)
@@ -640,14 +640,14 @@ cdef class Reference:
             return make_oid(self, oidp)
 
 
-cdef class Tree:
+cdef class GitTree:
 
     cdef git_tree *_tree
 
-    def __cinit__(Tree self):
+    def __cinit__(GitTree self):
         self._tree = NULL
 
-    def __dealloc__(Tree self):
+    def __dealloc__(GitTree self):
         if self._tree is not NULL:
             git_tree_free(self._tree)
 
@@ -729,6 +729,14 @@ cdef class Repository:
                                          self._repository, oid._oid, oid.length)
         check_error(error)
         return commit
+
+    def lookup_tree(Repository self, GitOid oid):
+        cdef int error
+        cdef GitTree tree = GitTree()
+        error = git_tree_lookup_prefix(
+            cython.address(tree._tree), self._repository, oid._oid, oid.length)
+        check_error(error)
+        return tree
 
     def list_refs(Repository self):
         cdef unsigned int index

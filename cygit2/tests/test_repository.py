@@ -77,11 +77,11 @@ class TestRepositoryWithContents(Cygit2RepositoryFixture):
         self.assertIn('refs/remotes/origin/master', self.repo.list_refs())
 
     def test_lookup_tree(self):
-        found = True
         ref = self.repo.lookup_ref('refs/heads/master')
-        for entry in ref.logs():
-            tree = self.repo.lookup_tree(entry.id_new)
-            tree = self.repo.lookup_tree(entry.id_old)
+        commit = self.repo.lookup_commit(ref.oid)
+        # FIXME: insufficient test
+        self.repo.lookup_tree(commit.tree_id)
+
     def test_read_raw_object(self):
         from cygit2._cygit2 import GitOid
         oid = GitOid.from_string(self.commits[0])
