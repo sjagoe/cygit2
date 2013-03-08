@@ -8,6 +8,7 @@ from _types cimport \
     const_git_signature, \
     git_commit, \
     git_config, \
+    git_object, \
     git_odb, \
     git_repository, \
     git_time_t, \
@@ -15,6 +16,7 @@ from _types cimport \
     git_reflog, \
     const_git_reflog_entry, \
     git_tree, \
+    git_otype, \
     \
     GIT_OBJ_ANY, \
     GIT_OBJ_BAD, \
@@ -68,7 +70,7 @@ from _reflog cimport \
     git_reflog_entry_id_old, git_reflog_entry_message
 
 from _tree cimport \
-    git_tree_free, git_tree_lookup_prefix
+    git_tree_free, git_tree_lookup_prefix, git_tree_id
 
 from _status cimport \
     git_status_t, \
@@ -98,6 +100,11 @@ from _status cimport \
 
 from _clone cimport git_clone
 
+from _object cimport \
+    git_object_lookup_prefix, \
+    git_object_free, \
+    git_object_type
+
 
 include "_encoding.pxi"
 include "_error.pxi"
@@ -105,32 +112,32 @@ include "_enum.pxi"
 
 
 @cython.internal
-cdef class _GitOdbObjectType:
+cdef class _GitObjectType:
 
-    cdef EnumValue ANY
-    cdef EnumValue BAD
-    cdef EnumValue _EXT1
-    cdef EnumValue COMMIT
-    cdef EnumValue TREE
-    cdef EnumValue BLOB
-    cdef EnumValue TAG
-    cdef EnumValue _EXT2
-    cdef EnumValue OFS_DELTA
-    cdef EnumValue REF_DELTA
+    cdef readonly EnumValue ANY
+    cdef readonly EnumValue BAD
+    cdef readonly EnumValue _EXT1
+    cdef readonly EnumValue COMMIT
+    cdef readonly EnumValue TREE
+    cdef readonly EnumValue BLOB
+    cdef readonly EnumValue TAG
+    cdef readonly EnumValue _EXT2
+    cdef readonly EnumValue OFS_DELTA
+    cdef readonly EnumValue REF_DELTA
 
-    def __init__(_GitOdbObjectType self):
-        self.ANY       = EnumValue('GitOdbObjectType.ANY', GIT_OBJ_ANY)
-        self.BAD       = EnumValue('GitOdbObjectType.BAD', GIT_OBJ_BAD)
-        self._EXT1     = EnumValue('GitOdbObjectType._EXT1', GIT_OBJ__EXT1)
-        self.COMMIT    = EnumValue('GitOdbObjectType.COMMIT', GIT_OBJ_COMMIT)
-        self.TREE      = EnumValue('GitOdbObjectType.TREE', GIT_OBJ_TREE)
-        self.BLOB      = EnumValue('GitOdbObjectType.BLOB', GIT_OBJ_BLOB)
-        self.TAG       = EnumValue('GitOdbObjectType.TAG', GIT_OBJ_TAG)
-        self._EXT2     = EnumValue('GitOdbObjectType._EXT2', GIT_OBJ__EXT2)
-        self.OFS_DELTA = EnumValue('GitOdbObjectType.OFS_DELTA', GIT_OBJ_OFS_DELTA)
-        self.REF_DELTA = EnumValue('GitOdbObjectType.REF_DELTA', GIT_OBJ_REF_DELTA)
+    def __init__(_GitObjectType self):
+        self.ANY       = EnumValue('GitObjectType.ANY', GIT_OBJ_ANY)
+        self.BAD       = EnumValue('GitObjectType.BAD', GIT_OBJ_BAD)
+        self._EXT1     = EnumValue('GitObjectType._EXT1', GIT_OBJ__EXT1)
+        self.COMMIT    = EnumValue('GitObjectType.COMMIT', GIT_OBJ_COMMIT)
+        self.TREE      = EnumValue('GitObjectType.TREE', GIT_OBJ_TREE)
+        self.BLOB      = EnumValue('GitObjectType.BLOB', GIT_OBJ_BLOB)
+        self.TAG       = EnumValue('GitObjectType.TAG', GIT_OBJ_TAG)
+        self._EXT2     = EnumValue('GitObjectType._EXT2', GIT_OBJ__EXT2)
+        self.OFS_DELTA = EnumValue('GitObjectType.OFS_DELTA', GIT_OBJ_OFS_DELTA)
+        self.REF_DELTA = EnumValue('GitObjectType.REF_DELTA', GIT_OBJ_REF_DELTA)
 
-    cdef EnumValue _from_uint(_GitOdbObjectType self, unsigned int type):
+    cdef EnumValue _from_uint(_GitObjectType self, unsigned int type):
         for item in (self.ANY,
                      self.BAD,
                      self._EXT1,
@@ -145,7 +152,7 @@ cdef class _GitOdbObjectType:
                 return item
 
 
-cdef _GitOdbObjectType GitOdbObjectType = _GitOdbObjectType()
+GitObjectType = _GitObjectType()
 
 
 cdef class GitOdbObject:
@@ -178,8 +185,9 @@ cdef class GitOdbObject:
 
     property type:
         def __get__(GitOdbObject self):
+            cdef _GitObjectType ObjType = GitObjectType
             cdef unsigned int utype = git_odb_object_type(self._object)
-            return GitOdbObjectType._from_uint(utype)
+            return ObjType._from_uint(utype)
 
     def __repr__(GitOdbObject self):
         return '<GitOdbObject type={!r} size={!r}>'.format(self.type, self.size)
@@ -255,6 +263,20 @@ cdef class GitCommit:
                                             self._commit, generation)
         check_error(error)
         return parent
+
+    def __richcmp__(GitCommit self, GitCommit other not None, int op):
+        if op == 2: # ==
+            return self.oid == other.oid
+        elif op == 3: # !=
+            return self.oid != other.oid
+        elif op == 0: # <
+            return self.oid < other.oid
+        elif op == 1: # <= (not >)
+            return not (self.oid > other.oid)
+        elif op == 4: # >
+            return self.oid > other.oid
+        elif op == 5: # >= (not <)
+            return not (self.oid < other.oid)
 
     property oid:
         def __get__(GitCommit self):
@@ -581,6 +603,26 @@ cdef class GitTree:
         if self._tree is not NULL:
             git_tree_free(self._tree)
 
+    def __richcmp__(GitTree self, GitTree other not None, int op):
+        if op == 2: # ==
+            return self.oid == other.oid
+        elif op == 3: # !=
+            return self.oid != other.oid
+        elif op == 0: # <
+            return self.oid < other.oid
+        elif op == 1: # <= (not >)
+            return not (self.oid > other.oid)
+        elif op == 4: # >
+            return self.oid > other.oid
+        elif op == 5: # >= (not <)
+            return not (self.oid < other.oid)
+
+    property oid:
+        def __get__(GitTree self):
+            cdef const_git_oid *oidp
+            oidp = git_tree_id(self._tree)
+            return make_oid(self, oidp)
+
 
 cdef class Repository:
 
@@ -690,6 +732,32 @@ cdef class Repository:
             return tuple(items)
         finally:
             git_strarray_free(cython.address(arr))
+
+    def lookup_object(Repository self, GitOid oid, EnumValue otype):
+        cdef int error
+        cdef git_object *_object
+        cdef _GitObjectType ObjType = GitObjectType
+
+        error = git_object_lookup_prefix(
+            cython.address(_object), self._repository, oid._oid,
+            oid.length, <git_otype>otype.value)
+        check_error(error)
+
+        if _object is NULL:
+            return None
+
+        cdef unsigned int t = <unsigned int>git_object_type(_object)
+        type_ = ObjType._from_uint(<unsigned int>t)
+        if type_ == ObjType.COMMIT:
+            commit = GitCommit()
+            commit._commit = <git_commit*>_object
+            return commit
+        elif type_ == ObjType.TREE:
+            tree = GitTree()
+            tree._tree = <git_tree*>_object
+            return tree
+        git_object_free(_object)
+        return None
 
     def read(Repository self, GitOid oid):
         cdef GitOdb odb = self.odb()

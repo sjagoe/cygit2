@@ -3,7 +3,8 @@ import shutil
 import tempfile
 import unittest
 
-from cygit2._cygit2 import Repository, GitStatus, LibGit2RepositoryError
+from cygit2._cygit2 import Repository, GitStatus, LibGit2RepositoryError, \
+    GitObjectType, LibGit2InvalidError
 
 from cygit2.tests.fixtures import RepositoryFixture, Cygit2RepositoryFixture
 
@@ -92,6 +93,29 @@ class TestRepositoryWithContents(Cygit2RepositoryFixture):
         ref = self.repo.lookup_ref('refs/heads/master')
         commit = self.repo.lookup_commit(ref.oid)
         self.assertEqual(commit.oid, ref.oid)
+
+    def test_lookup_object_commit(self):
+        ref = self.repo.lookup_ref('refs/heads/master')
+        object_ = self.repo.lookup_object(ref.oid, GitObjectType.COMMIT)
+        commit = self.repo.lookup_commit(ref.oid)
+        self.assertEqual(commit, object_)
+
+    def test_lookup_object_auto_type(self):
+        ref = self.repo.lookup_ref('refs/heads/master')
+        object_ = self.repo.lookup_object(ref.oid, GitObjectType.ANY)
+        commit = self.repo.lookup_commit(ref.oid)
+        self.assertEqual(commit, object_)
+
+    def test_lookup_object_tree(self):
+        ref = self.repo.lookup_ref('refs/heads/master')
+        commit = self.repo.lookup_commit(ref.oid)
+        object_ = self.repo.lookup_object(commit.tree_id, GitObjectType.TREE)
+        self.assertEqual(commit.tree, object_)
+
+    def test_lookup_object_invalid_type(self):
+        ref = self.repo.lookup_ref('refs/heads/master')
+        with self.assertRaises(LibGit2InvalidError):
+            self.repo.lookup_object(ref.oid, GitObjectType.TREE)
 
 
 if __name__ == '__main__':

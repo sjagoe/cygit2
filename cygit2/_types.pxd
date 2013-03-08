@@ -9,7 +9,7 @@ cdef extern from "git2.h":
 
     ctypedef int64_t git_time_t
 
-    cdef enum git_otype:
+    cdef enum __git_otype:
         GIT_OBJ_ANY
         GIT_OBJ_BAD
         GIT_OBJ__EXT1
@@ -20,6 +20,8 @@ cdef extern from "git2.h":
         GIT_OBJ__EXT2
         GIT_OBJ_OFS_DELTA
         GIT_OBJ_REF_DELTA
+
+    ctypedef __git_otype git_otype
 
     ctypedef git_odb git_odb
 
