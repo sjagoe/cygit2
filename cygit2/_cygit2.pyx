@@ -403,7 +403,11 @@ cdef class GitCommit:
 
     property tree:
         def __get__(GitCommit self):
-            raise NotImplementedError() # git_commit_tree
+            cdef int error
+            cdef GitTree tree = GitTree()
+            error = git_commit_tree(cython.address(tree._tree), self._commit)
+            check_error(error)
+            return tree
 
     property tree_id:
         def __get__(GitCommit self):
