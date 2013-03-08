@@ -1,6 +1,20 @@
+import os
 from Cython.Distutils.build_ext import build_ext
 from setuptools import setup, Extension, find_packages
 
+# Use environment variable LIBGIT2 to set your own libgit2 configuration.
+# copied from pygit2 project
+libgit2_path = os.getenv("LIBGIT2")
+if libgit2_path is None:
+    if os.name == 'nt':
+        program_files = os.getenv("ProgramFiles")
+        libgit2_path = '%s\libgit2' % program_files
+    else:
+        libgit2_path = '/usr/local'
+
+libgit2_bin = os.path.join(libgit2_path, 'bin')
+libgit2_include = os.path.join(libgit2_path, 'include')
+libgit2_lib = os.getenv('LIBGIT2_LIB', os.path.join(libgit2_path, 'lib'))
 
 ext_modules = [
     Extension(
@@ -62,6 +76,8 @@ ext_modules = [
             'cygit2/_types.pxd',
             'cygit2/_version.pxd',
         ],
+        include_dirs=[libgit2_include],
+        library_dirs=[libgit2_lib],
         libraries=['git2'],
     ),
 ]
