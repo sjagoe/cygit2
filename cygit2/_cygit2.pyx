@@ -221,12 +221,12 @@ cdef class GitSignature:
     property name:
         def __get__(GitSignature self):
             cdef bytes py_string = self._signature.name
-            return py_string.decode('ascii') # FIXME
+            return py_string.decode(DEFAULT_ENCODING)
 
     property email:
         def __get__(GitSignature self):
             cdef bytes py_string = self._signature.email
-            return py_string.decode('ascii') # FIXME
+            return py_string.decode(DEFAULT_ENCODING)
 
 
 cdef class GitCommit:
@@ -269,7 +269,7 @@ cdef class GitCommit:
             if encoding is NULL:
                 return None
             py_string = <char*>encoding
-            return py_string
+            return py_string.decode('ascii') # Will it always be ascii?
 
     property message:
         def __get__(GitCommit self):
@@ -495,7 +495,7 @@ cdef class RefLogEntry:
         def __get__(RefLogEntry self):
             cdef char *message
             message = <char*>git_reflog_entry_message(self._entry)
-            return message.decode('utf-8')
+            return message.decode(DEFAULT_ENCODING)
 
 
 cdef class Reference:
