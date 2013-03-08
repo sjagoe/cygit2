@@ -117,6 +117,8 @@ class TestCommand(Command):
         # can be executed, and the parameter '-v -f' can be transfering to
         # unittest properly.
         test_argv = test_argv0 + shlex.split(self.args)
+        import cygit2
+        sys.modules['pygit2'] = cygit2
         unittest.main(None, defaultTest='test.test_suite', argv=test_argv)
 
 
