@@ -227,6 +227,8 @@ cdef extern from "git2.h":
 
     ctypedef git_signature git_signature
 
+    ctypedef git_signature const_git_signature "const git_signature"
+
     ctypedef git_reference git_reference
 
     cdef struct git_reference:

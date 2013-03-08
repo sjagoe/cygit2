@@ -31,6 +31,8 @@ from _git2 cimport \
     git_commit_tree, git_commit_tree_id, git_commit_parentcount, \
     git_commit_parent, git_commit_parent_id, git_commit_nth_gen_ancestor, \
     \
+    const_git_signature, git_signature_free, \
+    \
     git_config, git_config_free, \
     const_git_config_entry, git_config_get_entry, \
     \
@@ -269,6 +271,29 @@ cdef class GitOdb:
         return obj
 
 
+cdef class GitSignature:
+
+    cdef const_git_signature *_signature
+
+    cdef object _owner
+
+    def __cinit__(GitSignature self):
+        self._signature = NULL
+
+    def __init__(GitSignature self, object owner):
+        self._owner = owner
+
+    property name:
+        def __get__(GitSignature self):
+            cdef bytes py_string = self._signature.name
+            return py_string.decode('ascii') # FIXME
+
+    property email:
+        def __get__(GitSignature self):
+            cdef bytes py_string = self._signature.email
+            return py_string.decode('ascii') # FIXME
+
+
 cdef class GitCommit:
 
     cdef git_commit *_commit
@@ -339,11 +364,19 @@ cdef class GitCommit:
 
     property committer:
         def __get__(GitCommit self):
-            raise NotImplementedError() # git_commit_committer
+            cdef GitSignature committer = GitSignature(self)
+            committer._signature = git_commit_committer(self._commit)
+            if committer._signature is NULL:
+                return None
+            return committer
 
     property author:
         def __get__(GitCommit self):
-            raise NotImplementedError() # git_commit_author
+            cdef GitSignature author = GitSignature(self)
+            author._signature = git_commit_author(self._commit)
+            if author._signature is NULL:
+                return None
+            return author
 
     property tree:
         def __get__(GitCommit self):

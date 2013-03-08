@@ -58,6 +58,9 @@ git log --pretty="%H"
 def _git_init(path):
     command = '''\
 git init {path}; \
+cd {path}; \
+git config user.name "Test User"; \
+git config user.email "test@users.invalid"
 '''.format(path=path)
     _call_git(command)
 
@@ -73,7 +76,7 @@ git add .; \
 def _git_commit(path, message):
     command = '''\
 cd {path}; \
-git commit -m "{message}"; \
+git commit --author="Other User <other@users.invalid>" -m "{message}"; \
 '''.format(path=path, message=message)
     _call_git(command)
 
