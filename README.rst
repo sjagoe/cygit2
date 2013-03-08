@@ -11,6 +11,16 @@ The main difference at the moment is that ``cygit2`` uses cython to wrap
 the ``libgit2`` C code rather than using C directly.
 
 
+License
+=======
+
+``cygit2`` is licensed under the three-clause BSD License.
+
+``cygit2`` includes the ``pygit2`` test suite (in the ``test/``
+subdirectory), which is licensed under the terms of the GNU GPLv2 with
+the libgcc linking exception.
+
+
 Building
 ========
 
