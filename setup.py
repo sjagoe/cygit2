@@ -1,6 +1,8 @@
 import os
+import sys
+
 from Cython.Distutils.build_ext import build_ext
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Command, Extension, find_packages
 
 # Use environment variable LIBGIT2 to set your own libgit2 configuration.
 # copied from pygit2 project
@@ -83,6 +85,41 @@ ext_modules = [
 ]
 
 
+
+class TestCommand(Command):
+    """Command for running unittests without install."""
+
+    user_options = [("args=", None, '''The command args string passed to
+                                    unittest framework, such as
+                                     --args="-v -f"''')]
+
+    def initialize_options(self):
+        self.args = ''
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        self.run_command('build')
+        bld = self.distribution.get_command_obj('build')
+        #Add build_lib in to sys.path so that unittest can found DLLs and libs
+        sys.path = [os.path.abspath(bld.build_lib)] + sys.path
+
+        import shlex
+        import unittest
+        test_argv0 = [sys.argv[0] + ' test --args=']
+        # For transfering args to unittest, we have to split args by ourself,
+        # so that command like:
+        #
+        #   python setup.py test --args="-v -f"
+        #
+        # can be executed, and the parameter '-v -f' can be transfering to
+        # unittest properly.
+        test_argv = test_argv0 + shlex.split(self.args)
+        unittest.main(None, defaultTest='test.test_suite', argv=test_argv)
+
+
 setup(
     name='cygit2',
     version='0.1.0',
@@ -103,5 +140,8 @@ setup(
     ],
     packages=find_packages(),
     ext_modules=ext_modules,
-    cmdclass={'build_ext': build_ext},
+    cmdclass={
+        'build_ext': build_ext,
+        'test': TestCommand,
+    },
 )
