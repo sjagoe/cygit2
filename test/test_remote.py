@@ -27,6 +27,7 @@
 
 """Tests for Remote objects."""
 
+import unittest
 
 import pygit2
 from . import utils
@@ -38,6 +39,8 @@ REMOTE_FETCHSPEC_DST = 'refs/remotes/origin/*'
 REMOTE_REPO_OBJECTS = 24
 REMOTE_REPO_BYTES = 2253
 
+
+@unittest.skip('Not implemented')
 class RepositoryTest(utils.RepoTestCase):
     def test_remote_create(self):
         name = 'upstream'
@@ -97,6 +100,7 @@ class RepositoryTest(utils.RepoTestCase):
         self.assertTrue(remote.name in [x.name for x in self.repo.remotes])
 
 
+@unittest.skip('Not implemented')
 class EmptyRepositoryTest(utils.EmptyRepoTestCase):
     def test_fetch(self):
         remote = self.repo.remotes[0]
