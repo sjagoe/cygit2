@@ -242,6 +242,10 @@ cdef class GitSignature:
         cdef git_time_t c_time = -1
         cdef int c_offset = 0
 
+        if name is None or email is None:
+            self._encoding = DEFAULT_ENCODING
+            return # Fixme
+
         if encoding is not None:
             encoding = encoding[:len(encoding)]
         else:
