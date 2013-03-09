@@ -37,9 +37,16 @@ class Repository(BaseRepository):
         try:
             return super(Repository, self).__getitem__(oid)
         except LibGit2Error:
-            raise KeyError('oid_hex')
+            raise KeyError(oid_hex)
 
-    def read(self, oid):
+    def __contains__(self, oid_hex):
+        oid = GitOid(oid_hex)
+        try:
+            return super(Repository, self).__contains__(oid)
+        except LibGit2Error:
+            raise KeyError(oid_hex)
+
+    def read(self, oid_hex):
         oid = GitOid(oid_hex)
         try:
             return super(Repository, self).read(oid)

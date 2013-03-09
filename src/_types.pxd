@@ -93,6 +93,8 @@ cdef extern from "git2.h":
     cdef struct git_tree_entry:
         pass
 
+    ctypedef git_tree_entry const_git_tree_entry "const git_tree_entry"
+
     ctypedef git_tree git_tree
 
     cdef struct git_tree:

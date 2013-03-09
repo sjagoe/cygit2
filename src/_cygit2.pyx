@@ -18,6 +18,7 @@ from _types cimport \
     const_git_reflog_entry, \
     git_tree, \
     git_tree_entry, \
+    const_git_tree_entry, \
     git_otype, \
     \
     GIT_OBJ_ANY, \
@@ -75,7 +76,7 @@ from _tree cimport \
     git_tree_free, git_tree_lookup_prefix, git_tree_id, \
     git_tree_entry_bypath, git_tree_entry_byindex, git_tree_entrycount, \
     git_tree_entry_id, git_tree_entry_dup, git_tree_entry_free, \
-    git_tree_entry_name
+    git_tree_entry_name, git_tree_entry_byname
 
 from _status cimport \
     git_status_t, \
@@ -355,6 +356,10 @@ cdef class GitCommit:
             oidp = git_commit_id(self._commit)
             return make_oid(self, oidp)
 
+    property hex:
+        def __get__(GitCommit self):
+            return self.oid.hex
+
     property message_encoding:
         def __get__(GitCommit self):
             cdef bytes py_string
@@ -369,7 +374,7 @@ cdef class GitCommit:
             message = self._get_message()
             if message is None:
                 return None
-            encoding = self.encoding
+            encoding = self.message_encoding
             if encoding is None:
                 encoding = DEFAULT_ENCODING
             return message.decode(encoding)
@@ -673,7 +678,7 @@ cdef class GitTreeEntry:
 
     property name:
         def __get__(GitTreeEntry self):
-            cdef char *path = git_tree_entry_name(self._entry)
+            cdef const_char *path = git_tree_entry_name(self._entry)
             cdef bytes py_path = path
             return py_path.decode(DEFAULT_ENCODING)
 
@@ -760,6 +765,17 @@ cdef class GitTree:
             return self._item_by_path(value)
         else:
             raise TypeError('Unexpected {}'.format(type(value)))
+
+    def __contains__(GitTree self, filename):
+        """Returns True if the item specified by ``filename`` is in the tree.
+
+        """
+        cdef bytes bpath = _to_bytes(filename)
+        cdef const_git_tree_entry *entry = git_tree_entry_byname(
+            self._tree, bpath)
+        if entry is NULL:
+            return False
+        return True
 
 
 cdef _open_repository(git_repository **repo, path):
