@@ -64,6 +64,7 @@ class ConfigTest(utils.RepoTestCase):
         except IOError:
             pass
 
+    @unittest.skip('Not implemented')
     def test_new(self):
         open(config_filename, 'w').close() # touch file
         config_write = pygit2.Config(config_filename)
@@ -121,6 +122,7 @@ class ConfigTest(utils.RepoTestCase):
         self.assertEqual(len(l), 1)
         self.assertEqual(l[0], 'foobar')
 
+    @unittest.skip('Not implemented')
     def test_write(self):
         config = self.repo.config
 
