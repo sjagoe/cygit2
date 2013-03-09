@@ -11,6 +11,15 @@ The main difference at the moment is that ``cygit2`` uses cython to wrap
 the ``libgit2`` C code rather than using C directly.
 
 
+=======
+License
+=======
+
+``cygit2`` is licensed under the terms of the GNU GPLv2 with the
+libgcc linking exception.  The full terms of the license can be found
+in the ``LICENSE`` file included in this distribution.
+
+
 Building
 ========
 
