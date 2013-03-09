@@ -18,7 +18,9 @@ else:
 
 
 # FIXME: Signature
-cdef bytes _to_bytes(object string, unicode encoding=DEFAULT_ENCODING):
+cdef bytes _to_bytes(object string, unicode encoding=None):
+    if encoding is None:
+        encoding = DEFAULT_ENCODING
     if isinstance(string, bytes):
         return string
     else:

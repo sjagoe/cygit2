@@ -1,8 +1,8 @@
-from cygit2._cygit2 import GitOid, Repository as BaseRepository
+from cygit2._cygit2 import GitOid, Repository as BaseRepository, \
+    GitSignature as Signature
 from cygit2._cygit2 import LibGit2Error
 
 GIT_OBJ_COMMIT = None
-Signature = None
 GIT_DIFF_INCLUDE_UNMODIFIED = None
 GitError = None
 GIT_REF_OID = None

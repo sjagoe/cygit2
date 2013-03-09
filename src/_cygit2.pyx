@@ -6,6 +6,7 @@ from libc.string cimport const_char, const_uchar
 
 from _types cimport \
     const_git_signature, \
+    git_signature, \
     git_commit, \
     git_config, \
     git_object, \
@@ -50,7 +51,7 @@ from _commit cimport \
     git_commit_parent, git_commit_parent_id, git_commit_nth_gen_ancestor
 
 from _signature cimport \
-    git_signature_free
+    git_signature_free, git_signature_new, git_signature_now
 
 from _config cimport \
     git_config_free, \
@@ -220,25 +221,91 @@ cdef class GitOdb:
 
 cdef class GitSignature:
 
-    cdef const_git_signature *_signature
+    cdef git_signature *_signature
 
     cdef object _owner
 
+    cdef readonly unicode _encoding
+
     def __cinit__(GitSignature self):
         self._signature = NULL
+        self._owner = None
 
-    def __init__(GitSignature self, object owner):
-        self._owner = owner
+    def __init__(GitSignature self, name=None, email=None, time=None,
+                 offset=None, encoding=None):
+        cdef int error
+        cdef bytes bytes_name
+        cdef bytes bemail
+        cdef char *c_name = NULL
+        cdef char *c_email = NULL
+        cdef git_time_t c_time = -1
+        cdef int c_offset = 0
+
+        if encoding is not None:
+            encoding = encoding[:len(encoding)]
+        else:
+            encoding = u'ascii'
+
+        if name is not None:
+            bytes_name = _to_bytes(name, encoding)
+            c_name = bytes_name
+        if email is not None:
+            bemail = _to_bytes(email, encoding)
+            c_email = bemail
+        if time is not None:
+            c_time = time
+        if offset is not None:
+            c_offset = offset
+
+        if c_time != -1:
+            error = git_signature_new(cython.address(self._signature), c_name,
+                                      c_email, c_time, c_offset)
+        else:
+            error = git_signature_now(cython.address(self._signature), c_name,
+                                      c_email)
+        check_error(error)
+
+        self._encoding = encoding
+
+    def __dealloc__(GitSignature self):
+        if self._signature is not NULL and self._owner is None:
+            git_signature_free(self._signature)
+
+    property _name:
+        def __get__(GitSignature self):
+            cdef bytes py_string = self._signature.name
+            return py_string
 
     property name:
         def __get__(GitSignature self):
-            cdef bytes py_string = self._signature.name
-            return py_string.decode(DEFAULT_ENCODING)
+            return self._name.decode(self._encoding)
 
     property email:
         def __get__(GitSignature self):
             cdef bytes py_string = self._signature.email
-            return py_string.decode(DEFAULT_ENCODING)
+            return py_string.decode(self._encoding)
+
+    property time:
+        def __get__(GitSignature self):
+            cdef git_time_t time = self._signature.when.time
+            return time
+
+    property offset:
+        def __get__(GitSignature self):
+            cdef int time = self._signature.when.offset
+            return time
+
+
+cdef GitSignature _make_signature(const_git_signature *_signature, object owner):
+    if _signature is NULL:
+        return None
+    # FIXME: Inefficient
+    cdef GitSignature signature = GitSignature()
+    # git_signature_free(signature._signature)
+    signature._signature = NULL
+    signature._owner = owner
+    signature._signature = <git_signature*>_signature
+    return signature
 
 
 cdef class GitCommit:
@@ -325,19 +392,13 @@ cdef class GitCommit:
 
     property committer:
         def __get__(GitCommit self):
-            cdef GitSignature committer = GitSignature(self)
-            committer._signature = git_commit_committer(self._commit)
-            if committer._signature is NULL:
-                return None
-            return committer
+            cdef const_git_signature *sig = git_commit_committer(self._commit)
+            return _make_signature(sig, self)
 
     property author:
         def __get__(GitCommit self):
-            cdef GitSignature author = GitSignature(self)
-            author._signature = git_commit_author(self._commit)
-            if author._signature is NULL:
-                return None
-            return author
+            cdef const_git_signature *sig = git_commit_author(self._commit)
+            return _make_signature(sig, self)
 
     property tree:
         def __get__(GitCommit self):
