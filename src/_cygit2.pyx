@@ -746,7 +746,7 @@ cdef class Repository:
         finally:
             git_strarray_free(cython.address(arr))
 
-    def lookup_object(Repository self, GitOid oid, EnumValue otype):
+    cpdef lookup_object(Repository self, GitOid oid, EnumValue otype):
         cdef int error
         cdef git_object *_object
         cdef _GitObjectType ObjType = GitObjectType
@@ -773,7 +773,7 @@ cdef class Repository:
         git_object_free(_object)
         return None
 
-    def read(Repository self, GitOid oid):
+    cpdef read(Repository self, GitOid oid):
         cdef GitOdb odb = self.odb()
         return odb.read_prefix(oid)
 
@@ -834,6 +834,15 @@ cdef class Repository:
                                    <void*>result)
         check_error(error)
         return result
+
+    def __contains__(Repository self, GitOid oid):
+        obj = self.read(oid)
+        if obj is None:
+            return False
+        return True
+
+    def __getitem__(Repository self, GitOid oid):
+        return self.lookup_object(oid, GitObjectType.ANY)
 
     property path:
         def __get__(Repository self):
