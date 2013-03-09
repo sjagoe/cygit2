@@ -23,7 +23,8 @@ from _errors cimport \
     GITERR_FETCHHEAD, \
     GITERR_MERGE, \
     \
-    GIT_OK
+    GIT_OK, \
+    GIT_ENOTFOUND
 
 
 class LibGit2Error(Exception): pass

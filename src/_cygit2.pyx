@@ -1,4 +1,5 @@
 from libc cimport stdlib
+from libc.stdint cimport int64_t
 
 import cython
 
@@ -55,8 +56,10 @@ from _signature cimport \
     git_signature_free, git_signature_new, git_signature_now
 
 from _config cimport \
-    git_config_free, \
-    const_git_config_entry, git_config_get_entry
+    git_config_new, git_config_free, git_config_open_ondisk, \
+    git_config_add_file_ondisk, const_git_config_entry, git_config_get_entry, \
+    git_config_get_int64, git_config_get_bool, git_config_get_string, \
+    git_config_get_multivar
 
 from _oid cimport \
     git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, git_oid_fromraw
@@ -460,6 +463,48 @@ cdef class GitCommit:
             return parent_ids
 
 
+class GitItemNotFound(Exception): pass
+
+
+cdef object _get_config_entry(git_config *config, name):
+    cdef int error
+    cdef int64_t c_int
+    cdef int c_bool
+    cdef char *c_string
+    cdef bytes py_string
+    cdef bytes bname = _to_bytes(name)
+
+    error = git_config_get_int64(
+        cython.address(c_int), config, bname)
+    if error == GIT_OK:
+        return c_int
+
+    error = git_config_get_bool(
+        cython.address(c_bool), config, bname)
+    if error == GIT_OK:
+        return bool(c_bool)
+
+    error = git_config_get_string(
+        <const_char**>cython.address(c_string), config, bname)
+    if error == GIT_OK:
+        py_string = c_string
+        return py_string.decode(DEFAULT_ENCODING)
+
+    if error == GIT_ENOTFOUND:
+        raise GitItemNotFound()
+    check_error(error)
+
+
+cdef int _git_config_get_multivar_cb(const_git_config_entry *entry,
+                                     void *payload):
+    cdef list result = <object>payload
+    if entry is NULL or entry.value is NULL:
+        return GIT_ENOTFOUND
+    value = <char*>entry.value
+    result.append(value.decode(DEFAULT_ENCODING))
+    return 0
+
+
 cdef class Config:
 
     cdef git_config *_config
@@ -467,11 +512,47 @@ cdef class Config:
     def __cinit__(Config self):
         self._config = NULL
 
+    def __init__(Config self, filename=None):
+        cdef int error
+        cdef bytes c_filename
+        if filename is not None:
+            c_filename = _to_bytes(filename)
+            error = git_config_open_ondisk(cython.address(self._config),
+                                           c_filename)
+        else:
+            error = git_config_new(cython.address(self._config))
+        check_error(error)
+
     def __dealloc__(Config self):
         if self._config is not NULL:
             git_config_free(self._config)
 
-    def get_entry(self, name):
+    def add_file(Config self, path, level=0, force=0):
+        cdef int error
+        cdef bytes c_path = _to_bytes(path)
+        cdef unsigned int c_level = level
+        cdef int c_force = force
+        error = git_config_add_file_ondisk(self._config, c_path, c_level,
+                                           c_force)
+        check_error(error)
+
+    def get_multivar(Config self, path, regexp=None):
+        cdef int error
+        cdef bytes py_regexp
+        cdef const_char *c_regexp = NULL
+        cdef bytes py_string = _to_bytes(path)
+        cdef const_char *c_string = py_string
+        if regexp is not None:
+            py_regexp = _to_bytes(regexp)
+            c_regexp = py_regexp
+        result = []
+        error = git_config_get_multivar(
+            self._config, c_string, c_regexp,
+            _git_config_get_multivar_cb, <void*>result)
+        check_error(error)
+        return result
+
+    cdef get_entry(Config self, name):
         cdef bytes bname = _to_bytes(name)
         cdef int error
         cdef const_git_config_entry *entry
@@ -481,6 +562,26 @@ cdef class Config:
         value = <char*>entry.value
         level = entry.level
         return level, value.decode(DEFAULT_ENCODING)
+
+    cdef get_value(Config self, name):
+        try:
+            return _get_config_entry(self._config, name)
+        except GitItemNotFound:
+            raise KeyError(name)
+        except LibGit2Error as e:
+            raise ValueError(unicode(e))
+
+    cdef _check_name(Config self, name):
+        if not isinstance(name, (bytes, str, unicode)):
+            raise TypeError(type(name))
+
+    def __getitem__(Config self, name):
+        self._check_name(name)
+        return self.get_value(name)
+
+    def __contains__(Config self, name):
+        self._check_name(name)
+        return self.get_entry(name) is not None # FIXME
 
 
 cdef class GitOid:
@@ -850,15 +951,6 @@ cdef class Repository:
         assert_repository(repo)
         return repo
 
-    def config(Repository self):
-        cdef int error
-        assert_repository(self)
-        cdef Config conf = Config()
-        error = git_repository_config(cython.address(conf._config),
-                                      self._repository)
-        check_error(error)
-        return conf
-
     def lookup_ref(Repository self, name):
         assert_repository(self)
         cdef bytes bname = _to_bytes(name)
@@ -1005,6 +1097,17 @@ cdef class Repository:
 
     def __getitem__(Repository self, GitOid oid):
         return self.lookup_object(oid, GitObjectType.ANY)
+
+    property config:
+        def __get__(Repository self):
+            cdef int error
+            assert_repository(self)
+            cdef Config conf = Config()
+            git_config_free(conf._config) # FIXME
+            error = git_repository_config(cython.address(conf._config),
+                                          self._repository)
+            check_error(error)
+            return conf
 
     property path:
         def __get__(Repository self):

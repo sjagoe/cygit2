@@ -1,5 +1,5 @@
 from cygit2._cygit2 import GitOid, Repository as BaseRepository, \
-    GitSignature as Signature
+    GitSignature as Signature, Config
 from cygit2._cygit2 import LibGit2Error
 
 GIT_OBJ_COMMIT = None
