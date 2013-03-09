@@ -14,11 +14,13 @@ the ``libgit2`` C code rather than using C directly.
 License
 =======
 
-``cygit2`` is licensed under the three-clause BSD License.
+``cygit2`` is licensed under the terms of the GNU GPLv2 with the
+libgcc linking exception.  The full terms of the license can be found
+in the ``LICENSE`` file included in this distribution.
 
 ``cygit2`` includes the ``pygit2`` test suite (in the ``test/``
-subdirectory), which is licensed under the terms of the GNU GPLv2 with
-the libgcc linking exception.
+subdirectory), which is also licensed under the terms of the GNU GPLv2
+with the libgcc linking exception.
 
 
 Building
