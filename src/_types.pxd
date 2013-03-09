@@ -5,6 +5,9 @@ from libc.stddef cimport wchar_t
 
 cdef extern from "git2.h":
 
+    cdef enum:
+        GIT_PATH_MAX
+
     ctypedef int64_t git_off_t
 
     ctypedef int64_t git_time_t

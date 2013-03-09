@@ -32,7 +32,8 @@ from _types cimport \
     GIT_OBJ__EXT2, \
     GIT_OBJ_OFS_DELTA, \
     GIT_OBJ_REF_DELTA, \
-    GIT_REF_LISTALL
+    GIT_REF_LISTALL, \
+    GIT_PATH_MAX
 
 from _strarray cimport git_strarray, git_strarray_free
 
@@ -59,7 +60,7 @@ from _config cimport \
     git_config_new, git_config_free, git_config_open_ondisk, \
     git_config_add_file_ondisk, const_git_config_entry, git_config_get_entry, \
     git_config_get_int64, git_config_get_bool, git_config_get_string, \
-    git_config_get_multivar, git_config_foreach
+    git_config_get_multivar, git_config_foreach, git_config_find_global
 
 from _oid cimport \
     git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, git_oid_fromraw
@@ -522,6 +523,20 @@ cdef int _git_config_foreach_callback(const_git_config_entry *entry,
     return 0
 
 
+def _Config_get_global_config():
+    cdef int error
+    cdef bytes py_path
+    cdef char *path = <char*>stdlib.malloc(GIT_PATH_MAX+1)
+    try:
+        path[GIT_PATH_MAX] = '\0'
+        error = git_config_find_global(path, GIT_PATH_MAX)
+        check_error(error)
+        py_path = path
+        return Config(py_path)
+    finally:
+        stdlib.free(path)
+
+
 cdef class Config:
 
     cdef git_config *_config
@@ -543,6 +558,8 @@ cdef class Config:
     def __dealloc__(Config self):
         if self._config is not NULL:
             git_config_free(self._config)
+
+    get_global_config = staticmethod(_Config_get_global_config)
 
     def add_file(Config self, path, level=0, force=0):
         cdef int error
