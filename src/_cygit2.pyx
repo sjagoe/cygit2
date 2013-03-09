@@ -388,7 +388,7 @@ cdef class GitCommit:
             return self._get_message()
 
     # FIXME: Convert time and time_offset into datetime
-    property time:
+    property commit_time:
         def __get__(GitCommit self):
             cdef git_time_t time = git_commit_time(self._commit)
             cdef object py_time = time
@@ -727,6 +727,10 @@ cdef class GitTree:
             cdef const_git_oid *oidp
             oidp = git_tree_id(self._tree)
             return make_oid(self, oidp)
+
+    property hex:
+        def __get__(GitTree self):
+            return self.oid.hex
 
     cdef size_t _len(GitTree self):
         return git_tree_entrycount(self._tree)
