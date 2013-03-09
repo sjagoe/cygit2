@@ -60,7 +60,8 @@ from _config cimport \
     git_config_new, git_config_free, git_config_open_ondisk, \
     git_config_add_file_ondisk, const_git_config_entry, git_config_get_entry, \
     git_config_get_int64, git_config_get_bool, git_config_get_string, \
-    git_config_get_multivar, git_config_foreach, git_config_find_global
+    git_config_get_multivar, git_config_foreach, git_config_find_global, \
+    git_config_find_system
 
 from _oid cimport \
     git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, git_oid_fromraw
@@ -537,6 +538,23 @@ def _Config_get_global_config():
         stdlib.free(path)
 
 
+def _Config_get_system_config():
+    cdef int error
+    cdef bytes py_path
+    cdef char *path = <char*>stdlib.malloc(GIT_PATH_MAX+1)
+    try:
+        path[GIT_PATH_MAX] = '\0'
+        error = git_config_find_system(path, GIT_PATH_MAX)
+        try:
+            check_error(error)
+        except LibGit2OSError as e:
+            raise IOError(unicode(e))
+        py_path = path
+        return Config(py_path)
+    finally:
+        stdlib.free(path)
+
+
 cdef class Config:
 
     cdef git_config *_config
@@ -560,6 +578,8 @@ cdef class Config:
             git_config_free(self._config)
 
     get_global_config = staticmethod(_Config_get_global_config)
+
+    get_system_config = staticmethod(_Config_get_system_config)
 
     def add_file(Config self, path, level=0, force=0):
         cdef int error
