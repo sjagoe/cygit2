@@ -1,3 +1,5 @@
+from cygit2._cygit2 import Repository
+
 GIT_OBJ_COMMIT = None
 Signature = None
 GIT_DIFF_INCLUDE_UNMODIFIED = None
@@ -13,7 +15,6 @@ Commit = None
 hashfile = None
 GIT_SORT_TIME = None
 GIT_SORT_REVERSE = None
-
 
 GIT_STATUS_CURRENT = 0
 GIT_STATUS_INDEX_DELETED = 0

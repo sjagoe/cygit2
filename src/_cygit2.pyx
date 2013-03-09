@@ -624,12 +624,24 @@ cdef class GitTree:
             return make_oid(self, oidp)
 
 
+cdef _open_repository(git_repository **repo, path):
+    cdef bytes bpath = _to_bytes(path)
+    cdef int error
+    error = git_repository_open(repo, bpath)
+    check_error(error)
+
+
 cdef class Repository:
 
     cdef git_repository *_repository
 
     def __cinit__(Repository self):
         self._repository = NULL
+
+    def __init__(Repository self, path=None):
+        if path is not None:
+            _open_repository(cython.address(self._repository), path)
+            assert_repository(self)
 
     def __dealloc__(Repository self):
         if self._repository is not NULL:
@@ -642,6 +654,7 @@ cdef class Repository:
 
     cdef GitOdb odb(Repository self):
         cdef int error
+        assert_repository(self)
         cdef GitOdb odb = GitOdb()
         error = git_repository_odb(cython.address(odb._odb), self._repository)
         check_error(error)
@@ -649,12 +662,8 @@ cdef class Repository:
 
     @classmethod
     def open(cls, path):
-        cdef bytes bpath = _to_bytes(path)
-        cdef int error
-        cdef Repository repo = Repository()
-        error = git_repository_open(cython.address(repo._repository), bpath)
-        check_error(error)
-        assert_repository(repo)
+        repo = Repository()
+        _open_repository(cython.address(repo._repository), path)
         return repo
 
     @classmethod
@@ -689,6 +698,7 @@ cdef class Repository:
         return conf
 
     def lookup_ref(Repository self, name):
+        assert_repository(self)
         cdef bytes bname = _to_bytes(name)
         if git_reference_is_valid_name(bname) == 0:
             raise LibGit2ReferenceError('Invalid reference name {!r}'.format(
@@ -702,6 +712,7 @@ cdef class Repository:
 
     def lookup_commit(Repository self, GitOid oid):
         cdef int error
+        assert_repository(self)
         cdef GitCommit commit = GitCommit()
         error = git_commit_lookup_prefix(cython.address(commit._commit),
                                          self._repository, oid._oid, oid.length)
@@ -710,6 +721,7 @@ cdef class Repository:
 
     def lookup_tree(Repository self, GitOid oid):
         cdef int error
+        assert_repository(self)
         cdef GitTree tree = GitTree()
         error = git_tree_lookup_prefix(
             cython.address(tree._tree), self._repository, oid._oid, oid.length)
@@ -721,6 +733,7 @@ cdef class Repository:
         cdef int error
         cdef git_strarray arr
         cdef bytes py_bytes
+        assert_repository(self)
         error = git_reference_list(cython.address(arr), self._repository,
                                    GIT_REF_LISTALL)
         check_error(error)
@@ -738,6 +751,7 @@ cdef class Repository:
         cdef git_object *_object
         cdef _GitObjectType ObjType = GitObjectType
 
+        assert_repository(self)
         error = git_object_lookup_prefix(
             cython.address(_object), self._repository, oid._oid,
             oid.length, <git_otype>otype.value)
@@ -771,6 +785,7 @@ cdef class Repository:
         cdef git_status_options opts
         cdef git_strarray pathspec
         cdef bytes py_string
+        assert_repository(self)
 
         opts.version = GIT_STATUS_OPTIONS_VERSION
         opts.flags = 0
@@ -813,6 +828,7 @@ cdef class Repository:
 
     def status(Repository self):
         cdef int error
+        assert_repository(self)
         result = {}
         error = git_status_foreach(self._repository, _status_foreach_cb,
                                    <void*>result)
@@ -821,6 +837,7 @@ cdef class Repository:
 
     property path:
         def __get__(Repository self):
+            assert_repository(self)
             cdef bytes py_string = git_repository_path(self._repository)
             return py_string.decode(DEFAULT_ENCODING)
 
