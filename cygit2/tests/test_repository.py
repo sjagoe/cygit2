@@ -85,7 +85,7 @@ class TestRepositoryWithContents(Cygit2RepositoryFixture):
 
     def test_read_raw_object(self):
         from cygit2._cygit2 import GitOid
-        oid = GitOid.from_string(self.commits[0])
+        oid = GitOid(self.commits[0])
         # FIXME: insufficient test
         self.repo.read(oid)
 

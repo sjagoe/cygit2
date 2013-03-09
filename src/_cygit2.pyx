@@ -2,7 +2,7 @@ from libc cimport stdlib
 
 import cython
 
-from libc.string cimport const_char
+from libc.string cimport const_char, const_uchar
 
 from _types cimport \
     const_git_signature, \
@@ -56,7 +56,7 @@ from _config cimport \
     const_git_config_entry, git_config_get_entry
 
 from _oid cimport \
-    git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn
+    git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, git_oid_fromraw
 
 from _refs cimport \
     git_reference_free, git_reference_lookup, \
@@ -427,6 +427,28 @@ cdef class GitOid:
         self.length = 40
         self._owner = None
 
+    def __init__(GitOid self, py_string=None):
+        cdef int error
+        cdef size_t length
+
+        if py_string is None:
+            return
+
+        if isinstance(py_string, unicode):
+            py_string = py_string.encode('ascii')
+        length = len(py_string)
+        self._string = <char*>stdlib.malloc(length)
+
+        self._string = py_string
+        self.length = length
+        error = git_oid_fromstrn(cython.address(self._my_oid),
+                                 <const_char*>self._string, length)
+        if error != GIT_OK:
+            git_oid_fromraw(cython.address(self._my_oid),
+                            <const_uchar*>self._string)
+        check_error(error)
+        self._oid = <const_git_oid*>cython.address(self._my_oid)
+
     def _dealloc__(GitOid self):
         self._oid = NULL
         self._owner = None
@@ -455,25 +477,6 @@ cdef class GitOid:
         finally:
             stdlib.free(hex_str)
         return py_hex_str.decode('ascii')
-
-    @classmethod
-    def from_string(cls, py_string):
-        cdef int error
-        cdef size_t length
-        cdef GitOid oid = GitOid()
-
-        if isinstance(py_string, unicode):
-            py_string = py_string.encode('ascii')
-        length = len(py_string)
-        oid._string = <char*>stdlib.malloc(length)
-
-        oid._string = py_string
-        oid.length = length
-        error = git_oid_fromstrn(cython.address(oid._my_oid),
-                                 <const_char*>oid._string, length)
-        check_error(error)
-        oid._oid = <const_git_oid*>cython.address(oid._my_oid)
-        return oid
 
     property hex:
         def __get__(GitOid self):
