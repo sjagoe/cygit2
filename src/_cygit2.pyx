@@ -42,6 +42,7 @@ from _types cimport \
     git_repository, \
     git_time_t, \
     git_reference, \
+    git_ref_t, \
     git_reflog, \
     const_git_reflog_entry, \
     git_tree, \
@@ -59,6 +60,9 @@ from _types cimport \
     GIT_OBJ__EXT2, \
     GIT_OBJ_OFS_DELTA, \
     GIT_OBJ_REF_DELTA, \
+    GIT_REF_INVALID, \
+    GIT_REF_OID, \
+    GIT_REF_SYMBOLIC, \
     GIT_REF_LISTALL, \
     GIT_PATH_MAX
 
@@ -66,7 +70,8 @@ from _strarray cimport git_strarray, git_strarray_free
 
 from _repository cimport \
     git_repository_odb, git_repository_open, git_repository_path, \
-    git_repository_init, git_repository_free, git_repository_config
+    git_repository_init, git_repository_free, git_repository_config, \
+    git_repository_head
 
 from _odb cimport \
     git_odb_read_prefix, git_odb_free, \
@@ -97,7 +102,8 @@ from _refs cimport \
     git_reference_free, git_reference_lookup, \
     git_reference_name, git_reference_target, git_reference_cmp, \
     git_reference_has_log, git_reference_list, git_reference_is_valid_name, \
-    git_reference_is_branch, git_reference_is_remote
+    git_reference_is_branch, git_reference_is_remote, git_reference_type, \
+    git_reference_symbolic_target
 
 from _reflog cimport \
     git_reflog_free, git_reflog_read, git_reflog_entrycount, \
@@ -147,6 +153,24 @@ from _object cimport \
 include "_encoding.pxi"
 include "_error.pxi"
 include "_enum.pxi"
+
+
+@cython.internal
+cdef class _GitReferenceType:
+
+    cdef readonly EnumValue INVALID
+    cdef readonly EnumValue OID
+    cdef readonly EnumValue SYMBOLIC
+    cdef readonly EnumValue LISTALL
+
+    def __init__(_GitReferenceType self):
+        self.INVALID  = EnumValue('GitReferenceType.INVALID', GIT_REF_INVALID)
+        self.OID      = EnumValue('GitReferenceType.OID', GIT_REF_OID)
+        self.SYMBOLIC = EnumValue('GitReferenceType.SYMBOLIC', GIT_REF_SYMBOLIC)
+        self.LISTALL  = EnumValue('GitReferenceType.LISTALL', GIT_REF_LISTALL)
+
+
+GitReferenceType = _GitReferenceType()
 
 
 @cython.internal
@@ -851,6 +875,19 @@ cdef class Reference:
             cdef bytes py_string = git_reference_name(self._reference)
             return py_string.decode(DEFAULT_ENCODING)
 
+    property target:
+        def __get__(Reference self):
+            cdef const_git_oid *oidp
+            cdef bytes py_string
+            cdef git_ref_t type_ = git_reference_type(self._reference)
+            if type_ == GIT_REF_OID:
+                oidp = git_reference_target(self._reference)
+                return make_oid(self, oidp)
+            elif type_ == GIT_REF_SYMBOLIC:
+                py_string = git_reference_symbolic_target(
+                    self._reference)
+                return py_string.decode(DEFAULT_ENCODING)
+
     property oid:
         def __get__(Reference self):
             cdef const_git_oid *oidp
@@ -1039,7 +1076,7 @@ cdef class Repository:
         assert_repository(repo)
         return repo
 
-    def lookup_ref(Repository self, name):
+    def lookup_reference(Repository self, name):
         assert_repository(self)
         cdef bytes bname = _to_bytes(name)
         if git_reference_is_valid_name(bname) == 0:
@@ -1049,7 +1086,10 @@ cdef class Repository:
         cdef Reference ref = Reference()
         error = git_reference_lookup(cython.address(ref._reference),
                                      self._repository, bname)
-        check_error(error)
+        try:
+            check_error(error)
+        except LibGit2ReferenceError:
+            raise KeyError(name)
         return ref
 
     def lookup_commit(Repository self, GitOid oid):
@@ -1178,13 +1218,25 @@ cdef class Repository:
         return result
 
     def __contains__(Repository self, GitOid oid):
+        assert_repository(self)
         obj = self.read(oid)
         if obj is None:
             return False
         return True
 
     def __getitem__(Repository self, GitOid oid):
+        assert_repository(self)
         return self.lookup_object(oid, GitObjectType.ANY)
+
+    property head:
+        def __get__(Repository self):
+            assert_repository(self)
+            cdef int error
+            cdef Reference ref = Reference()
+            error = git_repository_head(cython.address(ref._reference),
+                                        self._repository)
+            check_error(error)
+            return ref
 
     property config:
         def __get__(Repository self):

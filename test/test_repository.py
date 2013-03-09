@@ -79,6 +79,7 @@ class RepositoryTest(utils.BareRepoTestCase):
         a3 = self.repo.read(a_hex_prefix)
         self.assertEqual((GIT_OBJ_BLOB, 'a contents\n'), a3)
 
+    @unittest.skip('Not implemented')
     def test_write(self):
         data = b"hello world"
         # invalid object type

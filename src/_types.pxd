@@ -192,11 +192,13 @@ cdef extern from "git2.h":
     cdef struct git_reference:
         pass
 
-    cdef enum git_ref_t:
+    cdef enum __git_ref_t:
         GIT_REF_INVALID
         GIT_REF_OID
         GIT_REF_SYMBOLIC
         GIT_REF_LISTALL
+
+    ctypedef __git_ref_t git_ref_t
 
     cdef enum git_branch_t:
         GIT_BRANCH_LOCAL

@@ -60,21 +60,30 @@ def init_repository(path, bare=False):
 class Repository(BaseRepository):
 
     def __getitem__(self, oid_hex):
-        oid = GitOid(oid_hex)
+        if isinstance(oid_hex, GitOid):
+            oid = oid_hex
+        else:
+            oid = GitOid(oid_hex)
         try:
             return super(Repository, self).__getitem__(oid)
         except LibGit2Error:
             raise KeyError(oid_hex)
 
     def __contains__(self, oid_hex):
-        oid = GitOid(oid_hex)
+        if isinstance(oid_hex, GitOid):
+            oid = oid_hex
+        else:
+            oid = GitOid(oid_hex)
         try:
             return super(Repository, self).__contains__(oid)
         except LibGit2Error:
             raise KeyError(oid_hex)
 
     def read(self, oid_hex):
-        oid = GitOid(oid_hex)
+        if isinstance(oid_hex, GitOid):
+            oid = oid_hex
+        else:
+            oid = GitOid(oid_hex)
         try:
             return super(Repository, self).read(oid)
         except LibGit2Error:
