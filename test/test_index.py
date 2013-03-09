@@ -36,6 +36,7 @@ import pygit2
 from . import utils
 
 
+@unittest.skip('NotImplemented')
 class IndexBareTest(utils.BareRepoTestCase):
 
     def test_bare(self):
@@ -43,6 +44,7 @@ class IndexBareTest(utils.BareRepoTestCase):
         self.assertEqual(len(index), 0)
 
 
+@unittest.skip('NotImplemented')
 class IndexTest(utils.RepoTestCase):
 
     def test_index(self):

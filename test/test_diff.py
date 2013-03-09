@@ -84,6 +84,7 @@ DIFF_WORKDIR_EXPECTED = [
     'subdir/modified_file'
 ]
 
+@unittest.skip('NotImplemented')
 class DiffDirtyTest(utils.DirtyRepoTestCase):
     def test_diff_empty_index(self):
         repo = self.repo
@@ -101,6 +102,7 @@ class DiffDirtyTest(utils.DirtyRepoTestCase):
         files = [[x[0] for x in entry.files] for entry in diff]
         self.assertEqual(DIFF_WORKDIR_EXPECTED, list(itertools.chain(*files)))
 
+@unittest.skip('NotImplemented')
 class DiffTest(utils.BareRepoTestCase):
 
     def test_diff_invalid(self):
