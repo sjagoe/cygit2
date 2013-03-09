@@ -16,6 +16,7 @@ from _types cimport \
     git_reflog, \
     const_git_reflog_entry, \
     git_tree, \
+    git_tree_entry, \
     git_otype, \
     \
     GIT_OBJ_ANY, \
@@ -70,7 +71,10 @@ from _reflog cimport \
     git_reflog_entry_id_old, git_reflog_entry_message
 
 from _tree cimport \
-    git_tree_free, git_tree_lookup_prefix, git_tree_id
+    git_tree_free, git_tree_lookup_prefix, git_tree_id, \
+    git_tree_entry_bypath, git_tree_entry_byindex, git_tree_entrycount, \
+    git_tree_entry_id, git_tree_entry_dup, git_tree_entry_free, \
+    git_tree_entry_name
 
 from _status cimport \
     git_status_t, \
@@ -595,6 +599,34 @@ cdef class Reference:
             return make_oid(self, oidp)
 
 
+cdef class GitTreeEntry:
+
+    cdef git_tree_entry *_entry
+
+    def __cinit__(GitTreeEntry self):
+        self._entry = NULL
+
+    def __dealloc__(GitTreeEntry self):
+        if self._entry is not NULL:
+            git_tree_entry_free(self._entry)
+
+    property name:
+        def __get__(GitTreeEntry self):
+            cdef char *path = git_tree_entry_name(self._entry)
+            cdef bytes py_path = path
+            return py_path.decode(DEFAULT_ENCODING)
+
+    property oid:
+        def __get__(GitTreeEntry self):
+            cdef const_git_oid *oidp
+            oidp = git_tree_entry_id(self._entry)
+            return make_oid(self, oidp)
+
+    property hex:
+        def __get__(self):
+            return self.oid.hex
+
+
 cdef class GitTree:
 
     cdef git_tree *_tree
@@ -625,6 +657,48 @@ cdef class GitTree:
             cdef const_git_oid *oidp
             oidp = git_tree_id(self._tree)
             return make_oid(self, oidp)
+
+    cdef size_t _len(GitTree self):
+        return git_tree_entrycount(self._tree)
+
+    def __len__(GitTree self):
+        len_ = self._len()
+        return len_
+
+    cdef _item_by_index(GitTree self, index):
+        cdef long index_ = index
+        cdef size_t len_ = self._len()
+        cdef long llen = <long>len_
+        if index_ >= llen:
+            raise IndexError(index)
+        elif index_ < llen:
+            raise IndexError(index)
+        if index_ < 0:
+            index_ = len_ + index_
+
+        entry = GitTreeEntry()
+        entry._entry = git_tree_entry_dup(
+            git_tree_entry_byindex(self._tree, index_))
+        return entry
+
+    cdef _item_by_path(GitTree self, path):
+        cdef int error
+        cdef bytes bpath = _to_bytes(path)
+
+        entry = GitTreeEntry()
+        error = git_tree_entry_bypath(cython.address(entry._entry), self._tree,
+                                      bpath)
+        if error != GIT_OK:
+            raise KeyError(path)
+        return entry
+
+    def __getitem__(GitTree self, value):
+        if isinstance(value, int) or isinstance(value, long):
+            return self._item_by_index(value)
+        elif isinstance(value, bytes) or isinstance(value, unicode):
+            return self._item_by_path(value)
+        else:
+            raise TypeError('Unexpected {}'.format(type(value)))
 
 
 cdef _open_repository(git_repository **repo, path):
