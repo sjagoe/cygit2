@@ -59,7 +59,7 @@ from _config cimport \
     git_config_new, git_config_free, git_config_open_ondisk, \
     git_config_add_file_ondisk, const_git_config_entry, git_config_get_entry, \
     git_config_get_int64, git_config_get_bool, git_config_get_string, \
-    git_config_get_multivar
+    git_config_get_multivar, git_config_foreach
 
 from _oid cimport \
     git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, git_oid_fromraw
@@ -505,6 +505,23 @@ cdef int _git_config_get_multivar_cb(const_git_config_entry *entry,
     return 0
 
 
+cdef int _git_config_foreach_callback(const_git_config_entry *entry,
+                                      void *c_payload):
+    cdef bytes entry_name
+    cdef bytes entry_value
+    cdef object py_callback
+    cdef object py_payload
+    cdef tuple payload = <object>c_payload
+    py_callback, py_payload = payload
+    entry_name = entry.name
+    entry_value = entry.value
+    if py_payload is None:
+        py_callback(entry_name, entry_value)
+    else:
+        py_callback(entry_name, entry_value, py_payload)
+    return 0
+
+
 cdef class Config:
 
     cdef git_config *_config
@@ -551,6 +568,13 @@ cdef class Config:
             _git_config_get_multivar_cb, <void*>result)
         check_error(error)
         return result
+
+    def foreach(Config self, object callback, object py_payload=None):
+        cdef int error
+        cdef tuple payload = (callback, py_payload)
+        error = git_config_foreach(
+            self._config, _git_config_foreach_callback, <void*>payload)
+        check_error(error)
 
     cdef get_entry(Config self, name):
         cdef bytes bname = _to_bytes(name)

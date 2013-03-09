@@ -24,6 +24,7 @@ from _errors cimport \
     GITERR_MERGE, \
     \
     GIT_OK, \
+    GIT_ERROR, \
     GIT_ENOTFOUND
 
 
