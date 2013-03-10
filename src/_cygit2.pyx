@@ -74,7 +74,7 @@ from _repository cimport \
     git_repository_init, git_repository_free, git_repository_config, \
     git_repository_head, git_repository_discover, git_repository_head_orphan, \
     git_repository_head_detached, git_repository_is_bare, \
-    git_repository_is_empty
+    git_repository_is_empty, git_repository_workdir
 
 from _odb cimport \
     git_odb_read_prefix, git_odb_free, \
@@ -1332,6 +1332,14 @@ cdef class Repository:
         def __get__(Repository self):
             assert_repository(self)
             cdef bytes py_string = git_repository_path(self._repository)
+            return py_string.decode(DEFAULT_ENCODING)
+
+    property workdir:
+        def __get__(Repository self):
+            assert_repository(self)
+            if self.is_bare:
+                return None
+            cdef bytes py_string = git_repository_workdir(self._repository)
             return py_string.decode(DEFAULT_ENCODING)
 
 
