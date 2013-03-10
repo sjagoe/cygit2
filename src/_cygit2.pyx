@@ -103,7 +103,7 @@ from _refs cimport \
     git_reference_name, git_reference_target, git_reference_cmp, \
     git_reference_has_log, git_reference_list, git_reference_is_valid_name, \
     git_reference_is_branch, git_reference_is_remote, git_reference_type, \
-    git_reference_symbolic_target
+    git_reference_symbolic_target, git_reference_resolve
 
 from _reflog cimport \
     git_reflog_free, git_reflog_read, git_reflog_entrycount, \
@@ -168,6 +168,15 @@ cdef class _GitReferenceType:
         self.OID      = EnumValue('GitReferenceType.OID', GIT_REF_OID)
         self.SYMBOLIC = EnumValue('GitReferenceType.SYMBOLIC', GIT_REF_SYMBOLIC)
         self.LISTALL  = EnumValue('GitReferenceType.LISTALL', GIT_REF_LISTALL)
+
+    cdef _from_git_ref_t(_GitReferenceType self, git_ref_t type_):
+        for item in (self.INVALID,
+                     self.OID,
+                     self.SYMBOLIC,
+                     self.LISTALL):
+            if type_ == item.value:
+                return item
+        raise LibGit2Error('Invalid GitReferenceType: {!r}'.format(type_))
 
 
 GitReferenceType = _GitReferenceType()
@@ -870,6 +879,21 @@ cdef class Reference:
     def is_remote(Reference self):
         return git_reference_is_remote(self._reference) != 0
 
+    cdef git_ref_t _type(Reference self):
+        return git_reference_type(self._reference)
+
+    def resolve(Reference self):
+        cdef int error
+        cdef git_ref_t type_ = self._type()
+        if type_ == GIT_REF_OID:
+            return self
+        if type_ == GIT_REF_SYMBOLIC:
+            ref = Reference()
+            error = git_reference_resolve(cython.address(ref._reference),
+                                          self._reference)
+            check_error(error)
+            return ref
+
     property name:
         def __get__(Reference self):
             cdef bytes py_string = git_reference_name(self._reference)
@@ -893,6 +917,16 @@ cdef class Reference:
             cdef const_git_oid *oidp
             oidp = git_reference_target(self._reference)
             return make_oid(self, oidp)
+
+    property hex:
+        def __get__(Reference self):
+            return self.oid.hex
+
+    property type:
+        def __get__(Reference self):
+            cdef _GitReferenceType RefType = GitReferenceType
+            cdef git_ref_t type_ = self._type()
+            return RefType._from_git_ref_t(type_)
 
 
 cdef class GitTreeEntry:
@@ -1110,7 +1144,7 @@ cdef class Repository:
         check_error(error)
         return tree
 
-    def list_refs(Repository self):
+    def listall_references(Repository self):
         cdef unsigned int index
         cdef int error
         cdef git_strarray arr

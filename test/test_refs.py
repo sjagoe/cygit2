@@ -40,6 +40,7 @@ LAST_COMMIT = '2be5719152d4f82c7302b1c0932d8e5f0a4a0e98'
 
 class ReferencesTest(utils.RepoTestCase):
 
+    @unittest.skip('Can\'t create refs yet')
     def test_list_all_references(self):
         repo = self.repo
 
