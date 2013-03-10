@@ -601,9 +601,8 @@ def _Config_get_global_config():
 def _Config_get_system_config():
     cdef int error
     cdef bytes py_path
-    cdef char *path = <char*>stdlib.malloc(GIT_PATH_MAX+1)
+    cdef char *path = <char*>stdlib.malloc(GIT_PATH_MAX)
     try:
-        path[GIT_PATH_MAX] = '\0'
         error = git_config_find_system(path, GIT_PATH_MAX)
         try:
             check_error(error)

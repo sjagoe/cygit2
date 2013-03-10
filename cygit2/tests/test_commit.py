@@ -34,7 +34,7 @@ class TestCommit(Cygit2RepositoryFixture):
 
     def setUp(self):
         super(TestCommit, self).setUp()
-        ref = self.repo.lookup_ref('refs/heads/master')
+        ref = self.repo.lookup_reference('refs/heads/master')
         self.commit = self.repo.lookup_commit(ref.oid)
 
     def tearDown(self):
