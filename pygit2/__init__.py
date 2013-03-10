@@ -26,14 +26,14 @@
 # Boston, MA 02110-1301, USA.
 
 from cygit2._cygit2 import GitOid, Repository as BaseRepository, \
-    GitSignature as Signature, Config
+    GitSignature as Signature, Config, GitReferenceType
 from cygit2._cygit2 import LibGit2Error
 
 GIT_OBJ_COMMIT = None
 GIT_DIFF_INCLUDE_UNMODIFIED = None
 GitError = None
-GIT_REF_OID = None
-GIT_REF_SYMBOLIC = None
+GIT_REF_OID = GitReferenceType.OID
+GIT_REF_SYMBOLIC = GitReferenceType.SYMBOLIC
 GIT_OBJ_ANY = None
 GIT_OBJ_BLOB = None
 GIT_OBJ_COMMIT = None
