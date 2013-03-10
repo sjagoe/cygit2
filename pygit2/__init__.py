@@ -26,7 +26,7 @@
 # Boston, MA 02110-1301, USA.
 
 from cygit2._cygit2 import GitOid, Repository as BaseRepository, \
-    GitSignature as Signature, Config, GitReferenceType
+    GitSignature as Signature, Config, GitReferenceType, GitCommit as Commit
 from cygit2._cygit2 import LibGit2Error
 
 GIT_OBJ_COMMIT = None
@@ -39,7 +39,6 @@ GIT_OBJ_BLOB = None
 GIT_OBJ_COMMIT = None
 init_repository = None
 discover_repository = None
-Commit = None
 hashfile = None
 GIT_SORT_TIME = None
 GIT_SORT_REVERSE = None

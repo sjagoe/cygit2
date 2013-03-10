@@ -1264,13 +1264,16 @@ cdef class Repository:
 
     property head:
         def __get__(Repository self):
+            cdef const_git_oid *oidp
             assert_repository(self)
             cdef int error
-            cdef Reference ref = Reference()
-            error = git_repository_head(cython.address(ref._reference),
+            cdef git_reference *_reference
+            error = git_repository_head(cython.address(_reference),
                                         self._repository)
             check_error(error)
-            return ref
+            oidp = git_reference_target(_reference)
+            oid = make_oid(self, oidp)
+            return self.lookup_object(oid, GitObjectType.ANY)
 
     property config:
         def __get__(Repository self):
