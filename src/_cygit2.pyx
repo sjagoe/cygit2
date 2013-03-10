@@ -72,7 +72,8 @@ from _strarray cimport git_strarray, git_strarray_free
 from _repository cimport \
     git_repository_odb, git_repository_open, git_repository_path, \
     git_repository_init, git_repository_free, git_repository_config, \
-    git_repository_head, git_repository_discover
+    git_repository_head, git_repository_discover, git_repository_head_orphan, \
+    git_repository_head_detached
 
 from _odb cimport \
     git_odb_read_prefix, git_odb_free, \
@@ -1291,6 +1292,16 @@ cdef class Repository:
             oidp = git_reference_target(_reference)
             oid = make_oid(self, oidp)
             return self.lookup_object(oid, GitObjectType.ANY)
+
+    property head_is_detached:
+        def __get__(Repository self):
+            assert_repository(self)
+            return git_repository_head_detached(self._repository) != 0
+
+    property head_is_orphaned:
+        def __get__(Repository self):
+            assert_repository(self)
+            return git_repository_head_orphan(self._repository) != 0
 
     property config:
         def __get__(Repository self):
