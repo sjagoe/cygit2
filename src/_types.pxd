@@ -30,6 +30,13 @@
 from libc.stdint cimport int64_t, intmax_t, uintmax_t
 from libc.stddef cimport wchar_t
 
+
+cdef extern from "osdefs.h":
+
+    cdef enum:
+        MAXPATHLEN
+
+
 cdef extern from "git2.h":
 
     cdef enum:

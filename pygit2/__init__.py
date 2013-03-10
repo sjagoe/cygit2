@@ -37,8 +37,6 @@ GIT_REF_SYMBOLIC = GitReferenceType.SYMBOLIC
 GIT_OBJ_ANY = None
 GIT_OBJ_BLOB = None
 GIT_OBJ_COMMIT = None
-init_repository = None
-discover_repository = None
 hashfile = None
 GIT_SORT_TIME = None
 GIT_SORT_REVERSE = None
@@ -54,6 +52,11 @@ GIT_STATUS_WT_NEW = 0
 
 def init_repository(path, bare=False):
     return Repository.init(path, bare=bare)
+
+
+def discover_repository(path, across_fs=False, ceiling_dirs=None):
+    return Repository.discover(path, across_fs=across_fs,
+                               ceiling_dirs=ceiling_dirs)
 
 
 class Repository(BaseRepository):

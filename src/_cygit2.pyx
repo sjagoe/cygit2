@@ -64,14 +64,15 @@ from _types cimport \
     GIT_REF_OID, \
     GIT_REF_SYMBOLIC, \
     GIT_REF_LISTALL, \
-    GIT_PATH_MAX
+    GIT_PATH_MAX, \
+    MAXPATHLEN
 
 from _strarray cimport git_strarray, git_strarray_free
 
 from _repository cimport \
     git_repository_odb, git_repository_open, git_repository_path, \
     git_repository_init, git_repository_free, git_repository_config, \
-    git_repository_head
+    git_repository_head, git_repository_discover
 
 from _odb cimport \
     git_odb_read_prefix, git_odb_free, \
@@ -1108,6 +1109,23 @@ cdef class Repository:
         check_error(error)
         assert_repository(repo)
         return repo
+
+    @classmethod
+    def discover(cls, path, across_fs=False, ceiling_dirs=None):
+        cdef int error
+        cdef bytes out_path
+        cdef char *c_ceiling_dirs = NULL
+        cdef int c_across_fs = 0
+        cdef bytes bpath = _to_bytes(path)
+        cdef char *repo_path = <char*>stdlib.malloc(MAXPATHLEN)
+        try:
+            error = git_repository_discover(repo_path, MAXPATHLEN, bpath,
+                                            c_across_fs, c_ceiling_dirs)
+            check_error(error)
+            out_path = repo_path
+            return out_path.decode(DEFAULT_ENCODING)
+        finally:
+            stdlib.free(repo_path)
 
     def lookup_reference(Repository self, name):
         assert_repository(self)
