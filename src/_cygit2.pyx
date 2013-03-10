@@ -240,6 +240,47 @@ cdef class GitOdbObject:
         if self._object is not NULL:
             git_odb_object_free(self._object)
 
+    cdef _compare_type_contents(GitOdbObject self,
+                                EnumValue other_type, other_contents,
+                                int op):
+        if op == 2: # ==
+            return self.type == other_type and self.data == other_contents
+        elif op == 3: # !=
+            return not (self.type == other_type and self.data == other_contents)
+        elif op == 0: # <
+            return self.type < other_type and self.data < other_contents
+        elif op == 1: # <= (not >)
+            return not (self.type > other_type and self.data > other_contents)
+        elif op == 4: # >
+            return self.type > other_type and self.data > other_contents
+        elif op == 5: # >= (not <)
+            return not (self.type < other_type and self.data < other_contents)
+
+    def __richcmp__(GitOdbObject self, other, int op):
+        cdef bytes other_contents
+        cdef EnumValue other_type
+        if isinstance(other, tuple):
+            other_type = other[0]
+            if isinstance(other[1], unicode):
+                other_contents = other[1].encode(DEFAULT_ENCODING)
+            else:
+                other_contents = other[1]
+            return self._compare_type_contents(other_type, other_contents, op)
+        if not isinstance(other, GitOdbObject):
+            return False
+        if op == 2: # ==
+            return self.oid == other.oid
+        elif op == 3: # !=
+            return self.oid != other.oid
+        elif op == 0: # <
+            return self.oid < other.oid
+        elif op == 1: # <= (not >)
+            return not (self.oid > other.oid)
+        elif op == 4: # >
+            return self.oid > other.oid
+        elif op == 5: # >= (not <)
+            return not (self.oid < other.oid)
+
     property oid:
         def __get__(GitOdbObject self):
             cdef const_git_oid *oidp
@@ -713,45 +754,41 @@ cdef class GitOid:
 
     cdef git_oid _my_oid
 
-    cdef char *_string
-
     cdef readonly int length
 
     cdef object _owner
 
     def __cinit__(GitOid self):
         self._oid = NULL
-        self._string = NULL
         self.length = 40
         self._owner = None
 
     def __init__(GitOid self, py_string=None):
         cdef int error
         cdef size_t length
+        cdef char *c_string
 
         if py_string is None:
             return
 
-        if isinstance(py_string, unicode):
-            py_string = py_string.encode('ascii')
-        length = len(py_string)
-        self._string = <char*>stdlib.malloc(length)
-
-        self._string = py_string
-        self.length = length
-        error = git_oid_fromstrn(cython.address(self._my_oid),
-                                 <const_char*>self._string, length)
-        if error != GIT_OK:
+        if isinstance(py_string, bytes):
+            c_string = py_string
             git_oid_fromraw(cython.address(self._my_oid),
-                            <const_uchar*>self._string)
-        check_error(error)
+                            <const_uchar*>c_string)
+        else:
+            if isinstance(py_string, unicode):
+                py_string = py_string.encode('ascii')
+            length = len(py_string)
+            c_string = py_string
+            error = git_oid_fromstrn(cython.address(self._my_oid),
+                                     <const_char*>c_string, length)
+            check_error(error)
+            self.length = length
         self._oid = <const_git_oid*>cython.address(self._my_oid)
 
     def _dealloc__(GitOid self):
         self._oid = NULL
         self._owner = None
-        if self._string is not NULL:
-            stdlib.free(self._string)
 
     def __richcmp__(GitOid self not None, GitOid other not None, int op):
         if op == 2: # ==
@@ -778,6 +815,8 @@ cdef class GitOid:
 
     property hex:
         def __get__(GitOid self):
+            if self._oid is NULL:
+                raise LibGit2Error('OID Uninitialized')
             return self.format()[:self.length]
 
     def __repr__(GitOid self):
@@ -1275,10 +1314,11 @@ cdef class Repository:
 
     def __contains__(Repository self, GitOid oid):
         assert_repository(self)
-        obj = self.read(oid)
-        if obj is None:
+        try:
+            obj = self.read(oid)
+        except LibGit2Error:
             return False
-        return True
+        return obj is not None
 
     def __getitem__(Repository self, GitOid oid):
         assert_repository(self)

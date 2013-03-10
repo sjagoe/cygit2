@@ -26,17 +26,16 @@
 # Boston, MA 02110-1301, USA.
 
 from cygit2._cygit2 import GitOid, Repository as BaseRepository, \
-    GitSignature as Signature, Config, GitReferenceType, GitCommit as Commit
+    GitSignature as Signature, Config, GitReferenceType, GitCommit as Commit, \
+    GitObjectType
 from cygit2._cygit2 import LibGit2Error
 
-GIT_OBJ_COMMIT = None
 GIT_DIFF_INCLUDE_UNMODIFIED = None
-GitError = None
 GIT_REF_OID = GitReferenceType.OID
 GIT_REF_SYMBOLIC = GitReferenceType.SYMBOLIC
-GIT_OBJ_ANY = None
-GIT_OBJ_BLOB = None
-GIT_OBJ_COMMIT = None
+GIT_OBJ_ANY = GitObjectType.ANY
+GIT_OBJ_BLOB = GitObjectType.BLOB
+GIT_OBJ_COMMIT = GitObjectType.COMMIT
 hashfile = None
 GIT_SORT_TIME = None
 GIT_SORT_REVERSE = None
@@ -48,6 +47,9 @@ GIT_STATUS_INDEX_NEW = 0
 GIT_STATUS_WT_DELETED = 0
 GIT_STATUS_WT_MODIFIED = 0
 GIT_STATUS_WT_NEW = 0
+
+
+GitError = LibGit2Error
 
 
 def init_repository(path, bare=False):
@@ -78,8 +80,8 @@ class Repository(BaseRepository):
             oid = GitOid(oid_hex)
         try:
             return super(Repository, self).__contains__(oid)
-        except LibGit2Error:
-            raise KeyError(oid_hex)
+        except KeyError:
+            return False
 
     def read(self, oid_hex):
         if isinstance(oid_hex, GitOid):
