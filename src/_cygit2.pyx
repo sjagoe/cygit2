@@ -73,7 +73,8 @@ from _repository cimport \
     git_repository_odb, git_repository_open, git_repository_path, \
     git_repository_init, git_repository_free, git_repository_config, \
     git_repository_head, git_repository_discover, git_repository_head_orphan, \
-    git_repository_head_detached
+    git_repository_head_detached, git_repository_is_bare, \
+    git_repository_is_empty
 
 from _odb cimport \
     git_odb_read_prefix, git_odb_free, \
@@ -1279,6 +1280,16 @@ cdef class Repository:
     def __getitem__(Repository self, GitOid oid):
         assert_repository(self)
         return self.lookup_object(oid, GitObjectType.ANY)
+
+    property is_bare:
+        def __get__(Repository self):
+            assert_repository(self)
+            return git_repository_is_bare(self._repository) != 0
+
+    property is_empty:
+        def __get__(Repository self):
+            assert_repository(self)
+            return git_repository_is_empty(self._repository) != 0
 
     property head:
         def __get__(Repository self):
