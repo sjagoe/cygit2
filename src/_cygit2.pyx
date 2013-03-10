@@ -77,7 +77,7 @@ from _repository cimport \
     git_repository_is_empty, git_repository_workdir
 
 from _odb cimport \
-    git_odb_read_prefix, git_odb_free, \
+    git_odb_read_prefix, git_odb_free, git_odb_foreach, \
     git_odb_object, git_odb_object_free, git_odb_object_id, \
     git_odb_object_data, git_odb_object_size, git_odb_object_type
 
@@ -308,6 +308,13 @@ cdef class GitOdbObject:
         return '<GitOdbObject type={!r} size={!r}>'.format(self.type, self.size)
 
 
+cdef int _GitOdb_get_oids(const_git_oid *oid, void *payload):
+    cdef tuple py_payload = <object>payload
+    owner, result = py_payload
+    result.append(make_oid(owner, oid))
+    return 0
+
+
 @cython.internal
 cdef class GitOdb:
 
@@ -327,6 +334,12 @@ cdef class GitOdb:
                                     oid._oid, oid.length)
         check_error(error)
         return obj
+
+    cdef oids(GitOdb self):
+        cdef int error
+        cdef object payload = (self, [])
+        error = git_odb_foreach(self._odb, _GitOdb_get_oids, <void*>payload)
+        return payload[1]
 
 
 cdef class GitSignature:
@@ -790,19 +803,23 @@ cdef class GitOid:
         self._oid = NULL
         self._owner = None
 
-    def __richcmp__(GitOid self not None, GitOid other not None, int op):
+    def __richcmp__(GitOid self not None, other, int op):
+        if isinstance(other, GitOid):
+            other_hex = other.hex
+        else:
+            other_hex = other
         if op == 2: # ==
-            return self.hex == other.hex
+            return self.hex == other_hex
         elif op == 3: # !=
-            return self.hex != other.hex
+            return self.hex != other_hex
         elif op == 0: # <
-            return self.hex < other.hex
+            return self.hex < other_hex
         elif op == 1: # <= (not >)
-            return not (self.hex > other.hex)
+            return not (self.hex > other_hex)
         elif op == 4: # >
-            return self.hex > other.hex
+            return self.hex > other_hex
         elif op == 5: # >= (not <)
-            return not (self.hex < other.hex)
+            return not (self.hex < other_hex)
 
     cdef object format(GitOid self):
         cdef char *hex_str = <char*>stdlib.malloc(sizeof(char)*40)
@@ -1323,6 +1340,11 @@ cdef class Repository:
     def __getitem__(Repository self, GitOid oid):
         assert_repository(self)
         return self.lookup_object(oid, GitObjectType.ANY)
+
+    def __iter__(Repository self):
+        cdef int error
+        cdef GitOdb odb = self.odb()
+        return iter(odb.oids())
 
     property is_bare:
         def __get__(Repository self):
