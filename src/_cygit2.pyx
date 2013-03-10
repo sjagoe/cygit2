@@ -1265,7 +1265,7 @@ cdef class Repository:
             tree._tree = <git_tree*>_object
             return tree
         git_object_free(_object)
-        return None
+        raise TypeError('Unsupported object type {!r}'.format(type_))
 
     cpdef read(Repository self, GitOid oid):
         cdef GitOdb odb = self.odb()
