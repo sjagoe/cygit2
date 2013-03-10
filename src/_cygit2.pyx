@@ -780,6 +780,9 @@ cdef class GitOid:
         def __get__(GitOid self):
             return self.format()[:self.length]
 
+    def __repr__(GitOid self):
+        return repr(self.hex)
+
 
 cdef GitOid make_oid(object owner, const_git_oid *oidp):
     if oidp is NULL:

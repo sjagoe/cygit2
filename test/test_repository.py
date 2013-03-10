@@ -226,6 +226,7 @@ class RepositoryTest_II(utils.RepoTestCase):
         self.assertTrue('bye.txt' not in self.repo.status())
 
 class NewRepositoryTest(utils.NoRepoTestCase):
+    @unittest.skip('Not implemented')
     def test_new_repo(self):
         repo = init_repository(self._temp_dir, False)
 
