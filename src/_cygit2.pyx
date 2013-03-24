@@ -699,11 +699,13 @@ cdef int _git_config_foreach_callback(const_git_config_entry *entry,
     cdef tuple payload = <object>c_payload
     py_callback, py_payload = payload
     entry_name = entry.name
+    # FIXME?
     entry_value = entry.value
+
     if py_payload is None:
-        py_callback(entry_name, entry_value)
+        py_callback(entry_name.decode(DEFAULT_ENCODING), entry.value)
     else:
-        py_callback(entry_name, entry_value, py_payload)
+        py_callback(entry_name.decode(DEFAULT_ENCODING), entry.value, py_payload)
     return 0
 
 
@@ -812,7 +814,7 @@ cdef class Config:
         except GitItemNotFound:
             raise KeyError(name)
         except LibGit2Error as e:
-            raise ValueError(unicode(e))
+            raise ValueError(e.args[0].decode(DEFAULT_ENCODING))
 
     cdef _check_name(Config self, name):
         if not isinstance(name, (bytes, str, unicode)):
