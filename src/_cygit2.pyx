@@ -716,6 +716,8 @@ def _Config_get_global_config():
     try:
         path[GIT_PATH_MAX] = '\0'
         error = git_config_find_global(path, GIT_PATH_MAX)
+        if error == GIT_ENOTFOUND:
+            return Config()
         check_error(error)
         py_path = path
         return Config(py_path)
