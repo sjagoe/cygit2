@@ -34,6 +34,7 @@ from libc.string cimport const_char, const_uchar
 
 from _types cimport \
     const_git_signature, \
+    git_blob, \
     git_signature, \
     git_commit, \
     git_config, \
@@ -118,6 +119,11 @@ from _tree cimport \
     git_tree_entry_bypath, git_tree_entry_byindex, git_tree_entrycount, \
     git_tree_entry_id, git_tree_entry_dup, git_tree_entry_free, \
     git_tree_entry_name, git_tree_entry_byname
+
+from _blob cimport \
+    git_blob_free, \
+    git_blob_id, \
+    git_blob_rawcontent
 
 from _status cimport \
     git_status_t, \
@@ -580,6 +586,39 @@ cdef class GitCommit:
                 if oid is not None:
                     parent_ids.append(oid)
             return parent_ids
+
+
+cdef class GitBlob:
+
+    cdef git_blob *_blob
+
+    def __cinit__(GitBlob self):
+        self._blob = NULL
+
+    def __dealloc__(GitBlob self):
+        if self._blob is not NULL:
+            git_blob_free(self._blob)
+
+    def read_raw(GitBlob self):
+        cdef bytes py_content
+        cdef char *content = <char*>git_blob_rawcontent(self._blob)
+        py_content = content
+        return py_content
+
+    property type:
+        def __get__(GitBlob self):
+            cdef _GitObjectType ObjType = GitObjectType
+            return ObjType._from_uint(git_object_type(<git_object*>self._blob))
+
+    property oid:
+        def __get__(GitBlob self):
+            cdef const_git_oid *oidp
+            oidp = git_blob_id(self._blob)
+            return make_oid(self, oidp)
+
+    property hex:
+        def __get__(GitBlob self):
+            return self.oid.hex
 
 
 class GitItemNotFound(Exception): pass
@@ -1264,6 +1303,10 @@ cdef class Repository:
             tree = GitTree()
             tree._tree = <git_tree*>_object
             return tree
+        elif type_ == ObjType.BLOB:
+            blob = GitBlob()
+            blob._blob = <git_blob*>_object
+            return blob
         git_object_free(_object)
         raise TypeError('Unsupported object type {!r}'.format(type_))
 
