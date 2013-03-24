@@ -77,6 +77,8 @@ from _repository cimport \
     git_repository_head_detached, git_repository_is_bare, \
     git_repository_is_empty, git_repository_workdir
 
+from _revparse cimport git_revparse_single
+
 from _odb cimport \
     git_odb_read_prefix, git_odb_free, git_odb_foreach, \
     git_odb_object, git_odb_object_free, git_odb_object_id, \
@@ -1390,6 +1392,16 @@ cdef class Repository:
                                    <void*>result)
         check_error(error)
         return result
+
+    def revparse_single(Repository self, spec):
+        cdef int error
+        cdef bytes py_str = _to_bytes(spec)
+        cdef git_object *_object
+
+        error = git_revparse_single(cython.address(_object),
+                                    self._repository, py_str)
+        check_error(error)
+        return _GitObject_from_git_object_pointer(self, _object)
 
     def __contains__(Repository self, GitOid oid):
         assert_repository(self)
