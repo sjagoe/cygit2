@@ -100,7 +100,8 @@ from _config cimport \
     git_config_find_system
 
 from _oid cimport \
-    git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, git_oid_fromraw
+    git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, git_oid_fromraw, \
+    GIT_OID_MINPREFIXLEN
 
 from _refs cimport \
     git_reference_free, git_reference_lookup, \
@@ -811,6 +812,9 @@ cdef class GitOid:
         self._owner = None
 
     def __init__(GitOid self, py_string=None):
+        if py_string is not None and len(py_string) < GIT_OID_MINPREFIXLEN:
+            raise ValueError(('OID is shorted than minimum length ({}): '
+                              '{!r}').format(GIT_OID_MINPREFIXLEN, py_string))
         cdef int error
         cdef size_t length
         cdef char *c_string

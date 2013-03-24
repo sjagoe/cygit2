@@ -29,6 +29,9 @@
 
 cdef extern from "git2.h":
 
+    cdef enum:
+        GIT_OID_MINPREFIXLEN
+
     cdef struct git_oid:
         unsigned char id[20]
 
