@@ -119,7 +119,8 @@ from _tree cimport \
     git_tree_free, git_tree_lookup_prefix, git_tree_id, \
     git_tree_entry_bypath, git_tree_entry_byindex, git_tree_entrycount, \
     git_tree_entry_id, git_tree_entry_dup, git_tree_entry_free, \
-    git_tree_entry_name, git_tree_entry_byname
+    git_tree_entry_name, git_tree_entry_byname, git_tree_entry_filemode, \
+    git_tree_entry_to_object
 
 from _blob cimport \
     git_blob_free, \
@@ -442,12 +443,40 @@ cdef GitSignature _make_signature(const_git_signature *_signature, object owner)
     return signature
 
 
+cdef _GitObject_from_git_object_pointer(Repository repo, git_object *_object):
+    cdef _GitObjectType ObjType = GitObjectType
+    if _object is NULL:
+        return None
+
+    cdef unsigned int t = <unsigned int>git_object_type(_object)
+    type_ = ObjType._from_uint(<unsigned int>t)
+    if type_ == ObjType.COMMIT:
+        commit = GitCommit(repo)
+        commit._object = _object
+        return commit
+    elif type_ == ObjType.TREE:
+        tree = GitTree(repo)
+        tree._object = _object
+        return tree
+    elif type_ == ObjType.BLOB:
+        blob = GitBlob(repo)
+        blob._object = _object
+        return blob
+    git_object_free(_object)
+    raise TypeError('Unsupported object type {!r}'.format(type_))
+
+
 cdef class GitObject:
 
     cdef git_object *_object
 
+    cdef Repository _repository
+
     def __cinit__(GitObject self):
         self._object = NULL
+
+    def __init__(self, Repository repo):
+        self._repository = repo
 
     property type:
         def __get__(GitCommit self):
@@ -549,7 +578,7 @@ cdef class GitCommit(GitObject):
     property tree:
         def __get__(GitCommit self):
             cdef int error
-            cdef GitTree tree = GitTree()
+            cdef GitTree tree = GitTree(self._repository)
             error = git_commit_tree(<git_tree**>cython.address(tree._object),
                                     <git_commit*>self._object)
             check_error(error)
@@ -572,7 +601,7 @@ cdef class GitCommit(GitObject):
                 return []
             parents = []
             for index from 0 <= index < count:
-                parent = GitCommit()
+                parent = GitCommit(self._repository)
                 error = git_commit_parent(<git_commit**>cython.address(parent._object),
                                           <git_commit*>self._object, index)
                 check_error(error)
@@ -1032,8 +1061,13 @@ cdef class GitTreeEntry:
 
     cdef git_tree_entry *_entry
 
+    cdef Repository _repository
+
     def __cinit__(GitTreeEntry self):
         self._entry = NULL
+
+    def __init__(self, Repository repo):
+        self._repository = repo
 
     def __dealloc__(GitTreeEntry self):
         if self._entry is not NULL:
@@ -1054,6 +1088,19 @@ cdef class GitTreeEntry:
     property hex:
         def __get__(self):
             return self.oid.hex
+
+    property filemode:
+        def __get__(self):
+            return long(git_tree_entry_filemode(self._entry))
+
+    def to_object(self):
+        cdef int error
+        cdef git_object *_object
+        error = git_tree_entry_to_object(cython.address(_object),
+                                         self._repository._repository,
+                                         self._entry)
+        check_error(error)
+        return _GitObject_from_git_object_pointer(self._repository, _object)
 
 
 cdef class GitTree(GitObject):
@@ -1095,12 +1142,12 @@ cdef class GitTree(GitObject):
         cdef long llen = <long>len_
         if index_ >= llen:
             raise IndexError(index)
-        elif index_ < llen:
+        elif index_ < -llen:
             raise IndexError(index)
         if index_ < 0:
             index_ = len_ + index_
 
-        entry = GitTreeEntry()
+        entry = GitTreeEntry(self._repository)
         entry._entry = git_tree_entry_dup(
             git_tree_entry_byindex(<git_tree*>self._object, index_))
         return entry
@@ -1109,7 +1156,7 @@ cdef class GitTree(GitObject):
         cdef int error
         cdef bytes bpath = _to_bytes(path)
 
-        entry = GitTreeEntry()
+        entry = GitTreeEntry(self._repository)
         error = git_tree_entry_bypath(cython.address(entry._entry),
                                       <git_tree*>self._object, bpath)
         if error != GIT_OK:
@@ -1236,7 +1283,7 @@ cdef class Repository:
     def lookup_commit(Repository self, GitOid oid):
         cdef int error
         assert_repository(self)
-        cdef GitCommit commit = GitCommit()
+        cdef GitCommit commit = GitCommit(self)
         error = git_commit_lookup_prefix(<git_commit**>cython.address(commit._object),
                                          self._repository, oid._oid, oid.length)
         check_error(error)
@@ -1245,7 +1292,7 @@ cdef class Repository:
     def lookup_tree(Repository self, GitOid oid):
         cdef int error
         assert_repository(self)
-        cdef GitTree tree = GitTree()
+        cdef GitTree tree = GitTree(self)
         error = git_tree_lookup_prefix(
             <git_tree**>cython.address(tree._object), self._repository, oid._oid,
             oid.length)
@@ -1273,7 +1320,6 @@ cdef class Repository:
     cpdef lookup_object(Repository self, GitOid oid, EnumValue otype):
         cdef int error
         cdef git_object *_object
-        cdef _GitObjectType ObjType = GitObjectType
 
         assert_repository(self)
         error = git_object_lookup_prefix(
@@ -1281,25 +1327,7 @@ cdef class Repository:
             oid.length, <git_otype>otype.value)
         check_error(error)
 
-        if _object is NULL:
-            return None
-
-        cdef unsigned int t = <unsigned int>git_object_type(_object)
-        type_ = ObjType._from_uint(<unsigned int>t)
-        if type_ == ObjType.COMMIT:
-            commit = GitCommit()
-            commit._object = _object
-            return commit
-        elif type_ == ObjType.TREE:
-            tree = GitTree()
-            tree._object = _object
-            return tree
-        elif type_ == ObjType.BLOB:
-            blob = GitBlob()
-            blob._object = _object
-            return blob
-        git_object_free(_object)
-        raise TypeError('Unsupported object type {!r}'.format(type_))
+        return _GitObject_from_git_object_pointer(self, _object)
 
     cpdef read(Repository self, GitOid oid):
         cdef GitOdb odb = self.odb()
