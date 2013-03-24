@@ -187,6 +187,7 @@ class RepositoryTest_II(utils.RepoTestCase):
         expected = realpath(join(self._temp_dir, 'testrepo'))
         self.assertEqual(directory, expected)
 
+    @unittest.skip('Not implemented')
     def test_checkout_ref(self):
         ref_i18n = self.repo.lookup_reference('refs/heads/i18n')
 
@@ -202,6 +203,7 @@ class RepositoryTest_II(utils.RepoTestCase):
         self.assertTrue('new' in self.repo.head.tree)
         self.assertTrue('bye.txt' not in self.repo.status())
 
+    @unittest.skip('Not implemented')
     def test_checkout_index(self):
         # some changes to working dir
         with open(os.path.join(self.repo.workdir, 'hello.txt'), 'w') as f:
@@ -212,6 +214,7 @@ class RepositoryTest_II(utils.RepoTestCase):
         self.repo.checkout(pygit2.GIT_CHECKOUT_FORCE)
         self.assertTrue('hello.txt' not in self.repo.status())
 
+    @unittest.skip('Not implemented')
     def test_checkout_head(self):
         # some changes to the index
         with open(os.path.join(self.repo.workdir, 'bye.txt'), 'w') as f:
