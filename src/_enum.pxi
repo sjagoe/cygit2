@@ -37,19 +37,23 @@ cdef class EnumValue:
     def __repr__(EnumValue self):
         return self.name
 
-    def __richcmp__(EnumValue self not None, EnumValue other not None, int op):
+    def __richcmp__(EnumValue self not None, other, int op):
+        if other is None:
+            other_value = None
+        else:
+            other_value = other.value
         if op == 2: # ==
-            return self.value == other.value
+            return self.value == other_value
         elif op == 3: # !=
-            return self.value != other.value
+            return self.value != other_value
         elif op == 0: # <
-            return self.value < other.value
+            return self.value < other_value
         elif op == 1: # <= (not >)
-            return not (self.value > other.value)
+            return not (self.value > other_value)
         elif op == 4: # >
-            return self.value > other.value
+            return self.value > other_value
         elif op == 5: # >= (not <)
-            return not (self.value < other.value)
+            return not (self.value < other_value)
 
     def __hash__(EnumValue self):
         return hash(id(self.name))

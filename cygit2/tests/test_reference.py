@@ -36,7 +36,7 @@ class TestReferenceEmptyRepository(RepositoryFixture):
 
     def setUp(self):
         super(TestReferenceEmptyRepository, self).setUp()
-        self.ref = self.empty_repo.lookup_ref('HEAD')
+        self.ref = self.empty_repo.lookup_reference('HEAD')
 
     def tearDown(self):
         del self.ref
@@ -44,13 +44,13 @@ class TestReferenceEmptyRepository(RepositoryFixture):
 
     def test_get_invalid_reference(self):
         with self.assertRaises(LibGit2ReferenceError):
-            ref = self.empty_repo.lookup_ref('invalid')
+            ref = self.empty_repo.lookup_reference('invalid')
 
     def test_cmp(self):
         # Test that __cmp__ returns 0 for two equal refs.  The two
         # objects here should have different IDs (i.e. are different
         # instances)
-        ref2 = self.empty_repo.lookup_ref('HEAD')
+        ref2 = self.empty_repo.lookup_reference('HEAD')
         self.assertEqual(self.ref, ref2)
         self.assertNotEqual(id(self.ref), id(ref2))
 
@@ -74,11 +74,11 @@ class TestReferenceEmptyRepository(RepositoryFixture):
 class TestReference(Cygit2RepositoryFixture):
 
     def test_oid_property(self):
-        ref = self.repo.lookup_ref('refs/heads/master')
+        ref = self.repo.lookup_reference('refs/heads/master')
         oid = ref.oid
 
     def test_reflog(self):
-        ref = self.repo.lookup_ref('refs/heads/master')
+        ref = self.repo.lookup_reference('refs/heads/master')
         self.assertGreater(len(list(ref.logs())), 0)
 
 

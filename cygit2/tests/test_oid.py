@@ -25,6 +25,8 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
+from __future__ import unicode_literals
+
 import unittest
 
 from cygit2._cygit2 import GitOid
@@ -33,11 +35,11 @@ from cygit2._cygit2 import GitOid
 class TestGitOid(unittest.TestCase):
 
     def test_oid_short(self):
-        oid = GitOid.from_string('abc123efab')
+        oid = GitOid('abc123efab')
         self.assertEqual(oid.hex, 'abc123efab')
 
     def test_oid_full(self):
-        oid = GitOid.from_string('abc123efababc123efababc123efababc123efab')
+        oid = GitOid('abc123efababc123efababc123efababc123efab')
         self.assertEqual(oid.hex, 'abc123efababc123efababc123efababc123efab')
 
 

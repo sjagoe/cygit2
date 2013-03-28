@@ -30,7 +30,17 @@
 from libc.stdint cimport int64_t, intmax_t, uintmax_t
 from libc.stddef cimport wchar_t
 
+
+cdef extern from "osdefs.h":
+
+    cdef enum:
+        MAXPATHLEN
+
+
 cdef extern from "git2.h":
+
+    cdef enum:
+        GIT_PATH_MAX
 
     ctypedef int64_t git_off_t
 
@@ -120,6 +130,8 @@ cdef extern from "git2.h":
     cdef struct git_tree_entry:
         pass
 
+    ctypedef git_tree_entry const_git_tree_entry "const git_tree_entry"
+
     ctypedef git_tree git_tree
 
     cdef struct git_tree:
@@ -187,11 +199,13 @@ cdef extern from "git2.h":
     cdef struct git_reference:
         pass
 
-    cdef enum git_ref_t:
+    cdef enum __git_ref_t:
         GIT_REF_INVALID
         GIT_REF_OID
         GIT_REF_SYMBOLIC
         GIT_REF_LISTALL
+
+    ctypedef __git_ref_t git_ref_t
 
     cdef enum git_branch_t:
         GIT_BRANCH_LOCAL
