@@ -35,7 +35,7 @@ Build with:
 
   $ python setup.py build_ext -i -I ../libgit2/include -L../libgit2/build -lgit2
 
-Alternatively you can set the environment variables `LIBGIT2` and `LIBGIT2_LIB`:
+Alternatively you can set the environment variables ``LIBGIT2`` and ``LIBGIT2_LIB``:
 
 .. code-block:: console
 
