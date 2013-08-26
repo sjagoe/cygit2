@@ -29,10 +29,14 @@ Building
 This assumes that ``libgit2`` has already been built in ``../libgit2`` and
 that the ``libgit2`` binaries are in ``../libgit2/build``
 
-Build with::
+Build with:
 
-  python setup.py build_ext -i -I ../libgit2/include -L../libgit2/build -lgit2
+.. code-block:: console
 
-Alternatively you can set the environment variables `LIBGIT2` and `LIBGIT2_LIB`::
+  $ python setup.py build_ext -i -I ../libgit2/include -L../libgit2/build -lgit2
 
-    LIBGIT2=../libgit2 LIBGIT2_LIB=../libgit2/build python setup.py build_ext -i
+Alternatively you can set the environment variables ``LIBGIT2`` and ``LIBGIT2_LIB``:
+
+.. code-block:: console
+
+    $ LIBGIT2=../libgit2 LIBGIT2_LIB=../libgit2/build python setup.py build_ext -i
