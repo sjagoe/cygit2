@@ -69,7 +69,7 @@ cdef extern from "git2.h":
 
     int git_reference_delete(git_reference *ref)
 
-    int git_reference_list(git_strarray *array, git_repository *repo, unsigned int list_flags)
+    int git_reference_list(git_strarray *array, git_repository *repo)
 
     ctypedef int (*git_reference_foreach_cb)(char *, void *)
 

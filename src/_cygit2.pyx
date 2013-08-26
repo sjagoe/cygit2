@@ -1311,8 +1311,7 @@ cdef class Repository:
         cdef git_strarray arr
         cdef bytes py_bytes
         assert_repository(self)
-        error = git_reference_list(cython.address(arr), self._repository,
-                                   GIT_REF_LISTALL)
+        error = git_reference_list(cython.address(arr), self._repository)
         check_error(error)
         try:
             items = []
