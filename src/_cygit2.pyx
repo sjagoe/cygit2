@@ -152,7 +152,7 @@ from _status cimport \
     GIT_STATUS_OPT_EXCLUDE_SUBMODULES, \
     GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS, \
     GIT_STATUS_OPT_DISABLE_PATHSPEC_MATCH, \
-    GIT_STATUS_SHOW_INDEX_THEN_WORKDIR, \
+    GIT_STATUS_SHOW_INDEX_AND_WORKDIR, \
     GIT_STATUS_OPTIONS_VERSION
 
 from _clone cimport git_clone
@@ -1311,8 +1311,7 @@ cdef class Repository:
         cdef git_strarray arr
         cdef bytes py_bytes
         assert_repository(self)
-        error = git_reference_list(cython.address(arr), self._repository,
-                                   GIT_REF_LISTALL)
+        error = git_reference_list(cython.address(arr), self._repository)
         check_error(error)
         try:
             items = []
@@ -1351,7 +1350,7 @@ cdef class Repository:
 
         opts.version = GIT_STATUS_OPTIONS_VERSION
         opts.flags = 0
-        opts.show = GIT_STATUS_SHOW_INDEX_THEN_WORKDIR
+        opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR
 
         if include_untracked:
             opts.flags |= GIT_STATUS_OPT_INCLUDE_UNTRACKED

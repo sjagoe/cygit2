@@ -55,7 +55,6 @@ cdef extern from "git2.h":
         GIT_STATUS_SHOW_INDEX_AND_WORKDIR
         GIT_STATUS_SHOW_INDEX_ONLY
         GIT_STATUS_SHOW_WORKDIR_ONLY
-        GIT_STATUS_SHOW_INDEX_THEN_WORKDIR
 
     ctypedef __git_status_show_t git_status_show_t
 
