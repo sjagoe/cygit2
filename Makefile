@@ -1,11 +1,10 @@
 PY2=../py2-venv/bin/python
 PY3=../py3-venv/bin/python
 
+TESTFLAGS=""
+
 
 default: build2 build3 test2 test3
-
-
-all: default testp2 testp3
 
 
 py2: build2 test2
@@ -21,16 +20,10 @@ build2: files
 	$(PY2) setup.py build_ext -i -I../libgit2/include -L../libgit2/build
 
 test2:
-	LD_LIBRARY_PATH=../libgit2/build $(PY2) -m unittest discover
-
-testp2:
-	LIBGIT2=../libgit2 LIBGIT2_LIB=../libgit2/build LD_LIBRARY_PATH=../libgit2/build $(PY2) setup.py test --args=""
+	LD_LIBRARY_PATH=../libgit2/build $(PY2) -m unittest discover $(TESTFLAGS)
 
 build3: files
 	$(PY3) setup.py build_ext -i -I../libgit2/include -L../libgit2/build
 
 test3:
-	LD_LIBRARY_PATH=../libgit2/build $(PY3) -m unittest discover
-
-testp3:
-	LIBGIT2=../libgit2 LIBGIT2_LIB=../libgit2/build LD_LIBRARY_PATH=../libgit2/build $(PY3) setup.py test
+	LD_LIBRARY_PATH=../libgit2/build $(PY3) -m unittest discover $(TESTFLAGS)
