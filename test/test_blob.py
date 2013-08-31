@@ -66,15 +66,14 @@ class BlobTest(utils.RepoTestCase):
 
         self.assertEqual(blob_oid, blob.oid)
         self.assertEqual(
-          utils.gen_blob_sha1(BLOB_NEW_CONTENT),
-          blob_oid.hex
+            utils.gen_blob_sha1(BLOB_NEW_CONTENT),
+            blob_oid.hex
         )
 
         self.assertEqual(BLOB_NEW_CONTENT, blob.data)
         self.assertEqual(len(BLOB_NEW_CONTENT), blob.size)
         self.assertEqual(BLOB_NEW_CONTENT, blob.read_raw())
 
-    @unittest.skip('Not implemented')
     def test_create_blob_fromfile(self):
 
         blob_oid = self.repo.create_blob_fromfile("bye.txt")
@@ -85,8 +84,8 @@ class BlobTest(utils.RepoTestCase):
 
         self.assertEqual(blob_oid, blob.oid)
         self.assertEqual(
-          utils.gen_blob_sha1(BLOB_FILE_CONTENT),
-          utils.oid_to_hex(blob_oid)
+            utils.gen_blob_sha1(BLOB_FILE_CONTENT),
+            blob_oid.hex
         )
 
         self.assertEqual(BLOB_FILE_CONTENT, blob.data)
