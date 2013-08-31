@@ -44,13 +44,12 @@ BLOB_NEW_CONTENT = b'foo bar\n'
 BLOB_FILE_CONTENT = b'bye world\n'
 
 
-@unittest.skip('Not implemented')
 class BlobTest(utils.RepoTestCase):
 
     def test_read_blob(self):
         blob = self.repo[BLOB_SHA]
         self.assertEqual(blob.hex, BLOB_SHA)
-        sha = utils.oid_to_hex(blob.oid)
+        sha = blob.oid.hex
         self.assertEqual(sha, BLOB_SHA)
         self.assertTrue(isinstance(blob, pygit2.Blob))
         self.assertEqual(pygit2.GIT_OBJ_BLOB, blob.type)
@@ -58,6 +57,7 @@ class BlobTest(utils.RepoTestCase):
         self.assertEqual(len(BLOB_CONTENT), blob.size)
         self.assertEqual(BLOB_CONTENT, blob.read_raw())
 
+    @unittest.skip('Not implemented')
     def test_create_blob(self):
         blob_oid = self.repo.create_blob(BLOB_NEW_CONTENT)
         blob = self.repo[blob_oid]
@@ -75,6 +75,7 @@ class BlobTest(utils.RepoTestCase):
         self.assertEqual(len(BLOB_NEW_CONTENT), blob.size)
         self.assertEqual(BLOB_NEW_CONTENT, blob.read_raw())
 
+    @unittest.skip('Not implemented')
     def test_create_blob_fromfile(self):
 
         blob_oid = self.repo.create_blob_fromfile("bye.txt")

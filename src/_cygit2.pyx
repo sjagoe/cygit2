@@ -50,6 +50,7 @@ from _types cimport \
     git_tree_entry, \
     const_git_tree_entry, \
     git_otype, \
+    git_off_t, \
     \
     GIT_OBJ_ANY, \
     GIT_OBJ_BAD, \
@@ -127,7 +128,8 @@ from _tree cimport \
 from _blob cimport \
     git_blob_free, \
     git_blob_id, \
-    git_blob_rawcontent
+    git_blob_rawcontent, \
+    git_blob_rawsize
 
 from _status cimport \
     git_status_t, \
@@ -635,7 +637,7 @@ cdef class GitBlob(GitObject):
         if self._object is not NULL:
             git_blob_free(<git_blob*>self._object)
 
-    def read_raw(GitBlob self):
+    cpdef read_raw(GitBlob self):
         cdef bytes py_content
         cdef char *content = <char*>git_blob_rawcontent(<git_blob*>self._object)
         py_content = content
@@ -646,6 +648,15 @@ cdef class GitBlob(GitObject):
             cdef const_git_oid *oidp
             oidp = git_blob_id(<git_blob*>self._object)
             return make_oid(self, oidp)
+
+    property data:
+        def __get__(GitBlob self):
+            return self.read_raw()
+
+    property size:
+        def __get__(GitBlob self):
+            cdef git_off_t size = git_blob_rawsize(<git_blob*>self._object)
+            return int(size)
 
 
 class GitItemNotFound(Exception): pass
