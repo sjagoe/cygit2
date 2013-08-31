@@ -57,7 +57,6 @@ class BlobTest(utils.RepoTestCase):
         self.assertEqual(len(BLOB_CONTENT), blob.size)
         self.assertEqual(BLOB_CONTENT, blob.read_raw())
 
-    @unittest.skip('Not implemented')
     def test_create_blob(self):
         blob_oid = self.repo.create_blob(BLOB_NEW_CONTENT)
         blob = self.repo[blob_oid]
@@ -68,7 +67,7 @@ class BlobTest(utils.RepoTestCase):
         self.assertEqual(blob_oid, blob.oid)
         self.assertEqual(
           utils.gen_blob_sha1(BLOB_NEW_CONTENT),
-          utils.oid_to_hex(blob_oid)
+          blob_oid.hex
         )
 
         self.assertEqual(BLOB_NEW_CONTENT, blob.data)
