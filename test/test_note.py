@@ -43,6 +43,7 @@ NOTES = [
      'f5e5aa4e36ab0fe62ee1ccc6eb8f79b866863b87')]
 
 
+@unittest.skip('Not Implemented')
 class NotesTest(utils.BareRepoTestCase):
 
     def test_create_note(self):

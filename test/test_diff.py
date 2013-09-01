@@ -101,6 +101,7 @@ HUNK_EXPECTED = """- a contents 2
 """
 
 
+@unittest.skip('Not Implemented')
 class DiffDirtyTest(utils.DirtyRepoTestCase):
     def test_diff_empty_index(self):
         repo = self.repo
@@ -132,6 +133,7 @@ class DiffDirtyTest(utils.DirtyRepoTestCase):
         self.assertEqual(DIFF_INDEX_TO_WORK_EXPECTED, files)
 
 
+@unittest.skip('Not Implemented')
 class DiffTest(utils.BareRepoTestCase):
 
     def test_diff_invalid(self):

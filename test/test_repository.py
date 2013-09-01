@@ -84,6 +84,7 @@ class RepositoryTest(utils.BareRepoTestCase):
         a3 = self.repo.read(a_hex_prefix)
         self.assertEqual((GIT_OBJ_BLOB, b'a contents\n'), a3)
 
+    @unittest.skip('Not Implemented')
     def test_write(self):
         data = b"hello world"
         # invalid object type
@@ -187,6 +188,7 @@ class RepositoryTest_II(utils.RepoTestCase):
         expected = realpath(join(self._temp_dir, 'testrepo'))
         self.assertEqual(directory, expected)
 
+    @unittest.skip('Not Implemented')
     def test_checkout_ref(self):
         ref_i18n = self.repo.lookup_reference('refs/heads/i18n')
 
@@ -206,6 +208,7 @@ class RepositoryTest_II(utils.RepoTestCase):
         self.assertTrue('new' in head.tree)
         self.assertTrue('bye.txt' not in self.repo.status())
 
+    @unittest.skip('Not Implemented')
     def test_checkout_index(self):
         # some changes to working dir
         with open(os.path.join(self.repo.workdir, 'hello.txt'), 'w') as f:
@@ -216,6 +219,7 @@ class RepositoryTest_II(utils.RepoTestCase):
         self.repo.checkout(strategy=pygit2.GIT_CHECKOUT_FORCE)
         self.assertTrue('hello.txt' not in self.repo.status())
 
+    @unittest.skip('Not Implemented')
     def test_checkout_head(self):
         # some changes to the index
         with open(os.path.join(self.repo.workdir, 'bye.txt'), 'w') as f:
@@ -231,6 +235,7 @@ class RepositoryTest_II(utils.RepoTestCase):
         self.repo.checkout('HEAD', pygit2.GIT_CHECKOUT_FORCE)
         self.assertTrue('bye.txt' not in self.repo.status())
 
+    @unittest.skip('Not Implemented')
     def test_merge_base(self):
         commit = self.repo.merge_base(
             '5ebeeebb320790caf276b9fc8b24546d63316533',
@@ -241,6 +246,7 @@ class RepositoryTest_II(utils.RepoTestCase):
 
 class NewRepositoryTest(utils.NoRepoTestCase):
 
+    @unittest.skip('Not Implemented')
     def test_new_repo(self):
         repo = init_repository(self._temp_dir, False)
 
@@ -299,6 +305,7 @@ class EmptyRepositoryTest(utils.EmptyRepoTestCase):
 
 
 
+@unittest.skip('Not Implemented')
 class CloneRepositoryTest(utils.NoRepoTestCase):
 
     def test_clone_repository(self):

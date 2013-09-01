@@ -40,6 +40,7 @@ REMOTE_REPO_OBJECTS = 30
 REMOTE_REPO_BYTES = 2758
 
 
+@unittest.skip('Not Implemented')
 class RepositoryTest(utils.RepoTestCase):
     def test_remote_create(self):
         name = 'upstream'
@@ -115,6 +116,7 @@ class RepositoryTest(utils.RepoTestCase):
                          self.repo.remotes[0].url)
 
 
+@unittest.skip('Not Implemented')
 class EmptyRepositoryTest(utils.EmptyRepoTestCase):
     def test_fetch(self):
         remote = self.repo.remotes[0]

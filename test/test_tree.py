@@ -83,6 +83,7 @@ class TreeTest(utils.BareRepoTestCase):
         self.assertTreeEntryEqual(subtree[0], sha, 'd', 0o0100644)
 
 
+    @unittest.skip('Not Implemented')
     def test_new_tree(self):
         repo = self.repo
         b0 = repo.create_blob('1')
