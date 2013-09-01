@@ -36,7 +36,7 @@ import pygit2
 from . import utils
 
 
-@unittest.skip('NotImplemented')
+@unittest.skip('Not Implemented')
 class IndexBareTest(utils.BareRepoTestCase):
 
     def test_bare(self):
@@ -44,7 +44,7 @@ class IndexBareTest(utils.BareRepoTestCase):
         self.assertEqual(len(index), 0)
 
 
-@unittest.skip('NotImplemented')
+@unittest.skip('Not Implemented')
 class IndexTest(utils.RepoTestCase):
 
     def test_index(self):
@@ -100,8 +100,7 @@ class IndexTest(utils.RepoTestCase):
         self.assertEqual(len(index), 1)
         # Test read-write returns the same oid
         oid = index.write_tree()
-        oid = utils.oid_to_hex(oid)
-        self.assertEqual(oid, tree_oid)
+        self.assertEqual(oid.hex, tree_oid)
         # Test the index is only modified in memory
         index.read()
         self.assertEqual(len(index), 2)
@@ -109,8 +108,7 @@ class IndexTest(utils.RepoTestCase):
 
     def test_write_tree(self):
         oid = self.repo.index.write_tree()
-        sha = utils.oid_to_hex(oid)
-        self.assertEqual(sha, 'fd937514cb799514d4b81bb24c5fcfeb6472b245')
+        self.assertEqual(oid.hex, 'fd937514cb799514d4b81bb24c5fcfeb6472b245')
 
     def test_iter(self):
         index = self.repo.index
@@ -133,17 +131,16 @@ class IndexTest(utils.RepoTestCase):
     def test_bare_index(self):
         index = pygit2.Index(os.path.join(self.repo.path, 'index'))
         self.assertEqual([x.hex for x in index],
-                [x.hex for x in self.repo.index])
+                         [x.hex for x in self.repo.index])
 
         self.assertRaises(pygit2.GitError, lambda: index.add('bye.txt'))
 
-    def test_del(self):
-        index = self.repo.index
-        del index['hello.txt']
-
     def test_remove(self):
         index = self.repo.index
+        self.assertTrue('hello.txt' in index)
         index.remove('hello.txt')
+        self.assertFalse('hello.txt' in index)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -25,7 +25,6 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 from .object import Object
-from .oid import Oid
 
 
 class Commit(Object):
@@ -70,7 +69,7 @@ class Commit(Object):
 
     @property
     def tree_id(self):
-        return Oid(self._object.tree_id)
+        return self._object.tree_id
 
     @property
     def parents(self):
@@ -78,4 +77,4 @@ class Commit(Object):
 
     @property
     def parent_ids(self):
-        return [Oid(i) for i in self._object.parent_ids]
+        return self._object.parent_ids

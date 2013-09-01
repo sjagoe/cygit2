@@ -24,19 +24,22 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
+
 from cygit2._cygit2 import (
     Config,
     GitCommit as Commit,
     GitObjectType,
+    GitOid as Oid,
     GitReferenceType,
     GitSignature as Signature,
+    Reference,
 )
 from cygit2._cygit2 import LibGit2Error
 
 from .blob import Blob
-from .oid import Oid
 from .repository import (
     Repository,
+    clone_repository,
     discover_repository,
     hash,
     hashfile,
@@ -44,6 +47,8 @@ from .repository import (
 )
 
 GIT_DIFF_INCLUDE_UNMODIFIED = None
+GIT_DIFF_IGNORE_WHITESPACE = None
+GIT_DIFF_IGNORE_WHITESPACE_EOL = None
 GIT_REF_OID = GitReferenceType.OID
 GIT_REF_SYMBOLIC = GitReferenceType.SYMBOLIC
 GIT_OBJ_ANY = GitObjectType.ANY

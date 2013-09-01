@@ -32,7 +32,6 @@ from __future__ import unicode_literals
 import operator
 import unittest
 
-import pygit2
 from . import utils
 
 
@@ -72,36 +71,45 @@ class TreeTest(utils.BareRepoTestCase):
         self.assertTreeEntryEqual(tree['c/d'], sha, 'd', 0o0100644)
         self.assertRaisesWithArg(KeyError, 'ab/cd', lambda: tree['ab/cd'])
 
+
     def test_read_subtree(self):
         tree = self.repo[TREE_SHA]
         subtree_entry = tree['c']
         self.assertTreeEntryEqual(subtree_entry, SUBTREE_SHA, 'c', 0o0040000)
 
-        subtree = subtree_entry.to_object()
+        subtree = self.repo[subtree_entry.oid]
         self.assertEqual(1, len(subtree))
         sha = '297efb891a47de80be0cfe9c639e4b8c9b450989'
         self.assertTreeEntryEqual(subtree[0], sha, 'd', 0o0100644)
 
-    # TODO This test worked with libgit2 v0.10.0, update to use the
-    # tree-builder
-    def xtest_new_tree(self):
-        b = self.repo.TreeBuilder()
-        b.insert('1' * 40, 'x', 0o0100644)
-        b.insert('2' * 40, 'y', 0o0100755)
-        tree = self.repo[b.write()]
+
+    @unittest.skip('Not Implemented')
+    def test_new_tree(self):
+        repo = self.repo
+        b0 = repo.create_blob('1')
+        b1 = repo.create_blob('2')
+        t = repo.TreeBuilder()
+        t.insert('x', b0, 0o0100644)
+        t.insert('y', b1, 0o0100755)
+        tree = repo[t.write()]
 
         self.assertTrue('x' in tree)
         self.assertTrue('y' in tree)
-        self.assertRaisesWithArg(KeyError, '1' * 40, tree['x'].to_object)
 
-        contents = '100644 x\0%s100755 y\0%s' % ('\x11' * 20, '\x22' * 20)
-        self.assertEqual((pygit2.GIT_OBJ_TREE, contents),
-                         self.repo.read(tree.hex))
+        x = tree['x']
+        y = tree['y']
+        self.assertEqual(x.filemode, 0o0100644)
+        self.assertEqual(y.filemode, 0o0100755)
+
+        self.assertEqual(repo[x.oid].oid, b0)
+        self.assertEqual(repo[y.oid].oid, b1)
+
 
     def test_modify_tree(self):
         tree = self.repo[TREE_SHA]
         self.assertRaises(TypeError, operator.setitem, 'c', tree['a'])
         self.assertRaises(TypeError, operator.delitem, 'c')
+
 
     def test_iterate_tree(self):
         """

@@ -31,9 +31,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
 import pygit2
-import itertools
 from pygit2 import GIT_DIFF_INCLUDE_UNMODIFIED
+from pygit2 import GIT_DIFF_IGNORE_WHITESPACE, GIT_DIFF_IGNORE_WHITESPACE_EOL
 from . import utils
+from itertools import chain
 
 
 COMMIT_SHA1_1 = '5fe808e8953c12735680c257f56600cb0de44b10'
@@ -61,7 +62,7 @@ index 297efb8..0000000
 -c/d contents
 """
 
-DIFF_INDEX_EXPECTED = [
+DIFF_HEAD_TO_INDEX_EXPECTED = [
     'staged_changes',
     'staged_changes_file_deleted',
     'staged_changes_file_modified',
@@ -72,7 +73,7 @@ DIFF_INDEX_EXPECTED = [
     'staged_new_file_modified'
 ]
 
-DIFF_WORKDIR_EXPECTED = [
+DIFF_HEAD_TO_WORKDIR_EXPECTED = [
     'file_deleted',
     'modified_file',
     'staged_changes',
@@ -84,75 +85,136 @@ DIFF_WORKDIR_EXPECTED = [
     'subdir/modified_file'
 ]
 
-@unittest.skip('NotImplemented')
+DIFF_INDEX_TO_WORK_EXPECTED = [
+    'file_deleted',
+    'modified_file',
+    'staged_changes_file_deleted',
+    'staged_changes_file_modified',
+    'staged_new_file_deleted',
+    'staged_new_file_modified',
+    'subdir/deleted_file',
+    'subdir/modified_file'
+]
+
+HUNK_EXPECTED = """- a contents 2
++ a contents
+"""
+
+
+@unittest.skip('Not Implemented')
 class DiffDirtyTest(utils.DirtyRepoTestCase):
     def test_diff_empty_index(self):
         repo = self.repo
-        head = repo[repo.lookup_reference('HEAD').resolve().oid]
-        diff = head.tree.diff(repo.index)
 
-        files = [[x[0] for x in entry.files] for entry in diff]
-        self.assertEqual(DIFF_INDEX_EXPECTED, list(itertools.chain(*files)))
+        head = repo[repo.lookup_reference('HEAD').resolve().target]
+        diff = head.tree.diff_to_index(repo.index)
+        files = [patch.new_file_path for patch in diff]
+        self.assertEqual(DIFF_HEAD_TO_INDEX_EXPECTED, files)
+
+        diff = repo.diff('HEAD', cached=True)
+        files = [patch.new_file_path for patch in diff]
+        self.assertEqual(DIFF_HEAD_TO_INDEX_EXPECTED, files)
 
     def test_workdir_to_tree(self):
         repo = self.repo
-        head = repo[repo.lookup_reference('HEAD').resolve().oid]
-        diff = head.tree.diff()
+        head = repo[repo.lookup_reference('HEAD').resolve().target]
 
-        files = [[x[0] for x in entry.files] for entry in diff]
-        self.assertEqual(DIFF_WORKDIR_EXPECTED, list(itertools.chain(*files)))
+        diff = head.tree.diff_to_workdir()
+        files = [patch.new_file_path for patch in diff]
+        self.assertEqual(DIFF_HEAD_TO_WORKDIR_EXPECTED, files)
 
-@unittest.skip('NotImplemented')
+        diff = repo.diff('HEAD')
+        files = [patch.new_file_path for patch in diff]
+        self.assertEqual(DIFF_HEAD_TO_WORKDIR_EXPECTED, files)
+
+    def test_index_to_workdir(self):
+        diff = self.repo.diff()
+        files = [patch.new_file_path for patch in diff]
+        self.assertEqual(DIFF_INDEX_TO_WORK_EXPECTED, files)
+
+
+@unittest.skip('Not Implemented')
 class DiffTest(utils.BareRepoTestCase):
 
     def test_diff_invalid(self):
         commit_a = self.repo[COMMIT_SHA1_1]
         commit_b = self.repo[COMMIT_SHA1_2]
-        self.assertRaises(TypeError, commit_a.tree.diff, commit_b)
+        self.assertRaises(TypeError, commit_a.tree.diff_to_tree, commit_b)
+        self.assertRaises(TypeError, commit_a.tree.diff_to_index, commit_b)
 
     def test_diff_empty_index(self):
         repo = self.repo
-        head = repo[repo.lookup_reference('HEAD').resolve().oid]
-        diff = head.tree.diff(repo.index)
+        head = repo[repo.lookup_reference('HEAD').resolve().target]
 
-        files = [[x[0].split('/')[0] for x in entry.files] for entry in diff]
-        self.assertEqual([x.name for x in head.tree], list(itertools.chain(*files)))
+        diff = self.repo.index.diff_to_tree(head.tree)
+        files = [patch.new_file_path.split('/')[0] for patch in diff]
+        self.assertEqual([x.name for x in head.tree], files)
+
+        diff = head.tree.diff_to_index(repo.index)
+        files = [patch.new_file_path.split('/')[0] for patch in diff]
+        self.assertEqual([x.name for x in head.tree], files)
+
+        diff = repo.diff('HEAD', cached=True)
+        files = [patch.new_file_path.split('/')[0] for patch in diff]
+        self.assertEqual([x.name for x in head.tree], files)
 
     def test_diff_tree(self):
         commit_a = self.repo[COMMIT_SHA1_1]
         commit_b = self.repo[COMMIT_SHA1_2]
 
-        diff = commit_a.tree.diff(commit_b.tree)
+        def _test(diff):
+            # self.assertIsNotNone is 2.7 only
+            self.assertTrue(diff is not None)
+            # self.assertIn is 2.7 only
+            self.assertEqual(2, sum(map(lambda x: len(x.hunks), diff)))
 
-        # self.assertIsNotNone is 2.7 only
-        self.assertTrue(diff is not None)
-        # self.assertIn is 2.7 only
-        self.assertAny(lambda x: ('a', 'a', 3, 0) in x.files, diff)
-        self.assertEqual(2, sum(map(lambda x: len(x.hunks), diff)))
+            patch = diff[0]
+            hunk = patch.hunks[0]
+            self.assertEqual(hunk.old_start, 1)
+            self.assertEqual(hunk.old_lines, 1)
+            self.assertEqual(hunk.new_start, 1)
+            self.assertEqual(hunk.new_lines, 1)
 
-        hunk = diff[0].hunks[0]
-        self.assertEqual(hunk.old_start, 1)
-        self.assertEqual(hunk.old_lines, 1)
-        self.assertEqual(hunk.new_start, 1)
-        self.assertEqual(hunk.new_lines, 1)
+            self.assertEqual(patch.old_file_path, 'a')
+            self.assertEqual(patch.new_file_path, 'a')
 
-        self.assertEqual(hunk.old_file, 'a')
-        self.assertEqual(hunk.new_file, 'a')
+        _test(commit_a.tree.diff_to_tree(commit_b.tree))
+        _test(self.repo.diff(COMMIT_SHA1_1, COMMIT_SHA1_2))
 
-        #self.assertEqual(hunk.data[0][0], b'a contents 2\n')
-        #self.assertEqual(hunk.data[1][0], b'a contents\n')
+
+    def test_diff_empty_tree(self):
+        commit_a = self.repo[COMMIT_SHA1_1]
+        diff = commit_a.tree.diff_to_tree()
+
+        def get_context_for_lines(diff):
+            hunks = chain(*map(lambda x: x.hunks, [p for p in diff]))
+            lines = chain(*map(lambda x: x.lines, hunks))
+            return map(lambda x: x[0], lines)
+
+        entries = [p.new_file_path for p in diff]
+        self.assertAll(lambda x: commit_a.tree[x], entries)
+        self.assertAll(lambda x: '-' == x, get_context_for_lines(diff))
+
+        diff_swaped = commit_a.tree.diff_to_tree(swap=True)
+        entries = [p.new_file_path for p in diff_swaped]
+        self.assertAll(lambda x: commit_a.tree[x], entries)
+        self.assertAll(lambda x: '+' == x, get_context_for_lines(diff_swaped))
+
+    def test_diff_revparse(self):
+        diff = self.repo.diff('HEAD', 'HEAD~6')
+        self.assertEqual(type(diff), pygit2.Diff)
 
     def test_diff_tree_opts(self):
         commit_c = self.repo[COMMIT_SHA1_3]
         commit_d = self.repo[COMMIT_SHA1_4]
 
-        for opt in [pygit2.GIT_DIFF_IGNORE_WHITESPACE,
-                    pygit2.GIT_DIFF_IGNORE_WHITESPACE_EOL]:
-            diff = commit_c.tree.diff(commit_d.tree, opt)
+        for flag in [GIT_DIFF_IGNORE_WHITESPACE,
+                     GIT_DIFF_IGNORE_WHITESPACE_EOL]:
+            diff = commit_c.tree.diff_to_tree(commit_d.tree, flag)
             self.assertTrue(diff is not None)
             self.assertEqual(0, len(diff[0].hunks))
 
-        diff = commit_c.tree.diff(commit_d.tree)
+        diff = commit_c.tree.diff_to_tree(commit_d.tree)
         self.assertTrue(diff is not None)
         self.assertEqual(1, len(diff[0].hunks))
 
@@ -161,58 +223,56 @@ class DiffTest(utils.BareRepoTestCase):
         commit_b = self.repo[COMMIT_SHA1_2]
         commit_c = self.repo[COMMIT_SHA1_3]
 
-        diff_b = commit_a.tree.diff(commit_b.tree)
+        diff_b = commit_a.tree.diff_to_tree(commit_b.tree)
         # self.assertIsNotNone is 2.7 only
         self.assertTrue(diff_b is not None)
 
-        diff_c = commit_b.tree.diff(commit_c.tree)
+        diff_c = commit_b.tree.diff_to_tree(commit_c.tree)
         # self.assertIsNotNone is 2.7 only
         self.assertTrue(diff_c is not None)
 
         # assertIn / assertNotIn are 2.7 only
-        self.assertAll(lambda x:('b', 'b', 3, 0) not in x.files, diff_b)
-        self.assertAny(lambda x:('b', 'b', 3, 0) in x.files, diff_c)
+        self.assertFalse('b' in [patch.new_file_path for patch in diff_b])
+        self.assertTrue('b' in [patch.new_file_path for patch in diff_c])
 
         diff_b.merge(diff_c)
 
         # assertIn is 2.7 only
-        self.assertAny(lambda x:('b', 'b', 3, 0) in x.files, diff_b)
+        self.assertTrue('b' in [patch.new_file_path for patch in diff_b])
 
-        hunk = diff_b[1].hunks[0]
+        patch = diff_b[0]
+        hunk = patch.hunks[0]
         self.assertEqual(hunk.old_start, 1)
         self.assertEqual(hunk.old_lines, 1)
         self.assertEqual(hunk.new_start, 1)
         self.assertEqual(hunk.new_lines, 1)
 
-        self.assertEqual(hunk.old_file, 'b')
-        self.assertEqual(hunk.new_file, 'b')
-
-        #self.assertEqual(hunk.data[0][0], b'b contents\n')
-        #self.assertEqual(hunk.data[1][0], b'b contents 2\n')
+        self.assertEqual(patch.old_file_path, 'a')
+        self.assertEqual(patch.new_file_path, 'a')
 
     def test_diff_patch(self):
         commit_a = self.repo[COMMIT_SHA1_1]
         commit_b = self.repo[COMMIT_SHA1_2]
 
-        diff = commit_a.tree.diff(commit_b.tree)
+        diff = commit_a.tree.diff_to_tree(commit_b.tree)
         self.assertEqual(diff.patch, PATCH)
-
-    def test_diff_header(self):
-        commit_a = self.repo[COMMIT_SHA1_1]
-        commit_b = self.repo[COMMIT_SHA1_2]
-        diff = commit_a.tree.diff(commit_b.tree)
-
-        self.assertEqual(diff[0].hunks[0].header, "@@ -1 +1 @@\n")
 
     def test_diff_oids(self):
         commit_a = self.repo[COMMIT_SHA1_1]
         commit_b = self.repo[COMMIT_SHA1_2]
-        diff = commit_a.tree.diff(commit_b.tree)
-        hunk = diff[0].hunks[0]
-        self.assertEqual(hunk.old_oid,
+        patch = commit_a.tree.diff_to_tree(commit_b.tree)[0]
+        self.assertEqual(patch.old_oid,
                          '7f129fd57e31e935c6d60a0c794efe4e6927664b')
-        self.assertEqual(hunk.new_oid,
+        self.assertEqual(patch.new_oid,
                          'af431f20fc541ed6d5afede3e2dc7160f6f01f16')
+
+    def test_hunk_content(self):
+        commit_a = self.repo[COMMIT_SHA1_1]
+        commit_b = self.repo[COMMIT_SHA1_2]
+        patch = commit_a.tree.diff_to_tree(commit_b.tree)[0]
+        hunk = patch.hunks[0]
+        lines = ('{0} {1}'.format(*x) for x in hunk.lines)
+        self.assertEqual(HUNK_EXPECTED, ''.join(lines))
 
     def test_find_similar(self):
         commit_a = self.repo[COMMIT_SHA1_6]
@@ -220,11 +280,11 @@ class DiffTest(utils.BareRepoTestCase):
 
         #~ Must pass GIT_DIFF_INCLUDE_UNMODIFIED if you expect to emulate
         #~ --find-copies-harder during rename transformion...
-        diff = commit_a.tree.diff(commit_b.tree, GIT_DIFF_INCLUDE_UNMODIFIED)
-        entry = ('lorem', 'ipsum', pygit2.GIT_DELTA_RENAMED, 100)
-        self.assertAll(lambda x: entry not in x.files, diff)
+        diff = commit_a.tree.diff_to_tree(commit_b.tree,
+                                          GIT_DIFF_INCLUDE_UNMODIFIED)
+        self.assertAll(lambda x: x.status != 'R', diff)
         diff.find_similar()
-        self.assertAny(lambda x: entry in x.files, diff)
+        self.assertAny(lambda x: x.status == 'R', diff)
 
 if __name__ == '__main__':
     unittest.main()

@@ -57,7 +57,7 @@ REVLOGS = [
 ]
 
 
-@unittest.skip('Not implemented')
+@unittest.skip('Not Implemented')
 class RevlogTestTest(utils.RepoTestCase):
     def test_log(self):
         ref = self.repo.lookup_reference('HEAD')
@@ -66,18 +66,16 @@ class RevlogTestTest(utils.RepoTestCase):
             self.assertEqual(entry.message, REVLOGS[i][1])
 
 
-@unittest.skip('Not implemented')
+@unittest.skip('Not Implemented')
 class WalkerTest(utils.RepoTestCase):
 
     def test_walk(self):
         walker = self.repo.walk(log[0], GIT_SORT_TIME)
-        out = [ x.hex for x in walker ]
-        self.assertEqual(out, log)
+        self.assertEqual([x.hex for x in walker], log)
 
     def test_reverse(self):
         walker = self.repo.walk(log[0], GIT_SORT_TIME | GIT_SORT_REVERSE)
-        out = [ x.hex for x in walker ]
-        self.assertEqual(out, list(reversed(log)))
+        self.assertEqual([x.hex for x in walker], list(reversed(log)))
 
     def test_hide(self):
         walker = self.repo.walk(log[0], GIT_SORT_TIME)
@@ -92,23 +90,20 @@ class WalkerTest(utils.RepoTestCase):
     def test_reset(self):
         walker = self.repo.walk(log[0], GIT_SORT_TIME)
         walker.reset()
-        out = [ x.hex for x in walker ]
-        self.assertEqual(out, [])
+        self.assertEqual([x.hex for x in walker], [])
 
     def test_push(self):
         walker = self.repo.walk(log[-1], GIT_SORT_TIME)
-        out = [ x.hex for x in walker ]
-        self.assertEqual(out, log[-1:])
+        self.assertEqual([x.hex for x in walker], log[-1:])
         walker.reset()
         walker.push(log[0])
-        out = [ x.hex for x in walker ]
-        self.assertEqual(out, log)
+        self.assertEqual([x.hex for x in walker], log)
 
     def test_sort(self):
         walker = self.repo.walk(log[0], GIT_SORT_TIME)
         walker.sort(GIT_SORT_TIME | GIT_SORT_REVERSE)
-        out = [ x.hex for x in walker ]
-        self.assertEqual(out, list(reversed(log)))
+        self.assertEqual([x.hex for x in walker], list(reversed(log)))
+
 
 if __name__ == '__main__':
     unittest.main()

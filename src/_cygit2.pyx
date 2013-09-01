@@ -24,6 +24,7 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
+import sys
 
 from libc cimport stdlib
 from libc.stdint cimport int64_t
@@ -845,6 +846,12 @@ cdef class Config:
         return self.get_entry(name) is not None # FIXME
 
 
+cdef GitOid _empty_GitOid():
+    cdef GitOid empty = GitOid.__new__(GitOid)
+    empty._oid = <const_git_oid*>cython.address(empty._my_oid)
+    return empty
+
+
 cdef class GitOid:
 
     cdef const_git_oid *_oid
@@ -860,35 +867,57 @@ cdef class GitOid:
         self.length = GIT_OID_HEXSZ
         self._owner = None
 
-    def __init__(GitOid self, py_string=None):
-        if py_string is not None and len(py_string) < GIT_OID_MINPREFIXLEN:
+    def __init__(GitOid self, hex=None, raw=None):
+        if raw is not None and hex is not None:
+            raise ValueError()
+        elif raw is None and hex is None:
+            raise ValueError()
+
+        # FIXME: Check raw min length
+        if hex is not None and len(hex) < GIT_OID_MINPREFIXLEN:
             raise ValueError(('OID is shorted than minimum length ({}): '
-                              '{!r}').format(GIT_OID_MINPREFIXLEN, py_string))
+                              '{!r}').format(GIT_OID_MINPREFIXLEN, hex))
+        elif hex is not None and len(hex) > GIT_OID_HEXSZ:
+            raise ValueError('Length of hex OID is larger than {}: {!r}'.format(
+                GIT_OID_RAWSZ, hex))
+        elif raw is not None and len(raw) > GIT_OID_RAWSZ:
+            raise ValueError('Length of raw OID is larger than {}: {!r}'.format(
+                GIT_OID_RAWSZ, raw))
+        elif raw is not None and not isinstance(raw, bytes):
+            raise ValueError('Raw value should be {}, got {} instead'.format(
+                bytes, type(raw)))
+
         cdef int error
         cdef size_t length
         cdef char *c_string
 
-        if py_string is None:
-            return
-
-        if isinstance(py_string, bytes):
-            c_string = py_string
-            git_oid_fromraw(cython.address(self._my_oid),
-                            <const_uchar*>c_string)
-        else:
-            if isinstance(py_string, unicode):
-                py_string = py_string.encode('ascii')
-            length = len(py_string)
-            c_string = py_string
+        self._oid = <const_git_oid*>cython.address(self._my_oid)
+        if hex is not None:
+            if isinstance(hex, unicode):
+                hex = hex.encode('ascii')
+            elif sys.version_info[0] > 2:
+                raise TypeError('Expected {}, got {} instead'.format(
+                    unicode, bytes))
+            length = len(hex)
+            c_string = hex
             error = git_oid_fromstrn(cython.address(self._my_oid),
                                      <const_char*>c_string, length)
             check_error(error)
             self.length = length
-        self._oid = <const_git_oid*>cython.address(self._my_oid)
+        elif raw is not None:
+            c_string = raw
+            git_oid_fromraw(cython.address(self._my_oid),
+                            <const_uchar*>c_string)
 
     def _dealloc__(GitOid self):
         self._oid = NULL
         self._owner = None
+
+    def __hash__(self):
+        hash(self.raw)
+
+    def __len__(self):
+        return self.length
 
     def __richcmp__(GitOid self not None, other, int op):
         if isinstance(other, GitOid):
@@ -937,7 +966,7 @@ cdef class GitOid:
 cdef GitOid make_oid(object owner, const_git_oid *oidp):
     if oidp is NULL:
         return None
-    cdef GitOid oid = GitOid()
+    cdef GitOid oid = _empty_GitOid()
     oid._owner = owner
     oid._oid = oidp
     assert_GitOid(oid)
@@ -1250,8 +1279,7 @@ cdef class Repository:
     @staticmethod
     def hash(data):
         cdef int error
-        cdef GitOid oid = GitOid()
-        oid._oid = <const_git_oid*>cython.address(oid._my_oid)
+        cdef GitOid oid = _empty_GitOid()
         cdef bytes py_data = _to_bytes(data)
         cdef size_t length = len(py_data)
         cdef const char *raw = py_data
@@ -1267,8 +1295,7 @@ cdef class Repository:
     @staticmethod
     def hashfile(filepath):
         cdef int error
-        cdef GitOid oid = GitOid()
-        oid._oid = <const_git_oid*>cython.address(oid._my_oid)
+        cdef GitOid oid = _empty_GitOid()
         cdef bytes py_data = _to_bytes(filepath)
         cdef const char *path = py_data
 
@@ -1473,8 +1500,7 @@ cdef class Repository:
 
     def create_blob(Repository self, content):
         cdef int error
-        cdef GitOid oid = GitOid()
-        oid._oid = <const_git_oid*>cython.address(oid._my_oid)
+        cdef GitOid oid = _empty_GitOid()
         cdef bytes py_str = _to_bytes(content)
         cdef size_t length = len(py_str)
         cdef const_char *raw = py_str
@@ -1489,10 +1515,9 @@ cdef class Repository:
 
         return oid
 
-    def create_blob_fromfile(Repository self, path):
+    def create_blob_fromworkdir(Repository self, path):
         cdef int error
-        cdef GitOid oid = GitOid()
-        oid._oid = <const_git_oid*>cython.address(oid._my_oid)
+        cdef GitOid oid = _empty_GitOid()
         cdef bytes py_path = _to_bytes(path)
         cdef const_char *char_path = py_path
 
@@ -1543,12 +1568,13 @@ cdef class Repository:
             assert_Repository(self)
             cdef int error
             cdef git_reference *_reference
+            cdef Reference reference
             error = git_repository_head(cython.address(_reference),
                                         self._repository)
             check_error(error)
-            oidp = git_reference_target(_reference)
-            oid = make_oid(self, oidp)
-            return self.lookup_object(oid, GitObjectType.ANY)
+            reference = Reference()
+            reference._reference = _reference
+            return reference
 
     property head_is_detached:
         def __get__(Repository self):
