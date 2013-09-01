@@ -5,14 +5,14 @@ python:
    - 3.3
 
 before_install:
-   - mkdir builds
-   - pushd builds
+   - git submodule update
+   - pushd libgit2
    - ../.travis-build-libgit2.sh
    - popd
 
 install:
    - pip install cython
-   - python setup.py build_ext -i -Ibuilds/libgit2/include -Lbuilds/libgit2/build
+   - python setup.py build_ext -i -Ilibgit2/include -Llibgit2/build
 
 script:
-   - LD_LIBRARY_PATH=builds/libgit2/build python -m unittest discover
+   - LD_LIBRARY_PATH=libgit2/build python -m unittest discover

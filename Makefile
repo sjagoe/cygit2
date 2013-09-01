@@ -17,13 +17,13 @@ files: src/_cygit2.pyx src/_error.pxi src/_enum.pxi src/_encoding.pxi src/_attr.
 
 
 build2: files
-	$(PY2) setup.py build_ext -i -I../libgit2/include -L../libgit2/build
+	$(PY2) setup.py build_ext -i -I./libgit2/include -L./libgit2/build
 
 test2:
-	LD_LIBRARY_PATH=../libgit2/build $(PY2) -m unittest discover $(TESTFLAGS)
+	LD_LIBRARY_PATH=./libgit2/build $(PY2) -m unittest discover $(TESTFLAGS)
 
 build3: files
-	$(PY3) setup.py build_ext -i -I../libgit2/include -L../libgit2/build
+	$(PY3) setup.py build_ext -i -I./libgit2/include -L./libgit2/build
 
 test3:
-	LD_LIBRARY_PATH=../libgit2/build $(PY3) -m unittest discover $(TESTFLAGS)
+	LD_LIBRARY_PATH=./libgit2/build $(PY3) -m unittest discover $(TESTFLAGS)
