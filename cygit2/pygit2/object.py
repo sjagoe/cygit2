@@ -25,7 +25,6 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 from cygit2._cygit2 import GitObjectType
-from .oid import Oid
 
 
 class Object(object):
@@ -40,7 +39,7 @@ class Object(object):
 
     @property
     def oid(self):
-        return Oid(self._object.oid)
+        return self._object.oid
 
     @property
     def type(self):

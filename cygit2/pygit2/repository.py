@@ -33,7 +33,6 @@ from cygit2._cygit2 import (
 from cygit2._cygit2 import LibGit2Error
 
 from .object import Object
-from .oid import Oid
 
 
 logger = logging.getLogger(__name__)
@@ -49,43 +48,37 @@ def discover_repository(path, across_fs=False, ceiling_dirs=None):
 
 
 def hash(data):
-    oid = BaseRepository.hash(data)
-    return Oid(oid)
+    return BaseRepository.hash(data)
 
 
 def hashfile(filepath):
-    oid = BaseRepository.hashfile(filepath)
-    return Oid(oid)
+    return BaseRepository.hashfile(filepath)
 
 
 class Repository(BaseRepository):
 
-    def __getitem__(self, oid_hex):
-        oid = Oid.from_hex(oid_hex)
+    def __getitem__(self, oid):
+        if not isinstance(oid, GitOid):
+            oid = GitOid(hex=oid)
         try:
-            core = super(Repository, self).__getitem__(oid.to_cygit2())
+            core = super(Repository, self).__getitem__(oid)
             return Object.convert(core)
         except LibGit2Error:
-            raise KeyError(oid_hex)
+            raise KeyError(oid)
 
-    def __contains__(self, oid_hex):
-        oid = Oid.from_hex(oid_hex)
+    def __contains__(self, oid):
+        if not isinstance(oid, GitOid):
+            oid = GitOid(hex=oid)
         try:
-            return super(Repository, self).__contains__(oid.to_cygit2())
+            return super(Repository, self).__contains__(oid)
         except KeyError:
             return False
 
-    def read(self, oid_hex):
-        oid = Oid.from_hex(oid_hex)
+    def read(self, oid):
+        if not isinstance(oid, GitOid):
+            oid = GitOid(hex=oid)
         try:
-            return super(Repository, self).read(oid.to_cygit2())
+            return super(Repository, self).read(oid)
         except LibGit2Error:
-            raise KeyError(oid_hex)
+            raise KeyError(oid)
 
-    def create_blob(self, content):
-        oid = super(Repository, self).create_blob(content)
-        return Oid(oid)
-
-    def create_blob_fromfile(self, path):
-        oid = super(Repository, self).create_blob_fromfile(path)
-        return Oid(oid)
