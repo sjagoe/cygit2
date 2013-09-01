@@ -1565,12 +1565,13 @@ cdef class Repository:
             assert_Repository(self)
             cdef int error
             cdef git_reference *_reference
+            cdef Reference reference
             error = git_repository_head(cython.address(_reference),
                                         self._repository)
             check_error(error)
-            oidp = git_reference_target(_reference)
-            oid = make_oid(self, oidp)
-            return self.lookup_object(oid, GitObjectType.ANY)
+            reference = Reference()
+            reference._reference = _reference
+            return reference
 
     property head_is_detached:
         def __get__(Repository self):

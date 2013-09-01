@@ -32,6 +32,7 @@ from cygit2._cygit2 import (
     GitOid as Oid,
     GitReferenceType,
     GitSignature as Signature,
+    Reference,
 )
 from cygit2._cygit2 import LibGit2Error
 
