@@ -30,7 +30,10 @@ from cygit2._cygit2 import (
     GitOid,
     Repository as BaseRepository,
 )
-from cygit2._cygit2 import LibGit2Error
+from cygit2._cygit2 import (
+    LibGit2Error,
+    LibGit2OSError,
+)
 
 from .object import Object
 
@@ -82,3 +85,8 @@ class Repository(BaseRepository):
         except LibGit2Error:
             raise KeyError(oid)
 
+    def create_blob_fromworkdir(self, path):
+        try:
+            return super(Repository, self).create_blob_fromworkdir(path)
+        except LibGit2OSError:
+            raise KeyError(path)

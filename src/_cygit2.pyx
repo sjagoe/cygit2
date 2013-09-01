@@ -1512,7 +1512,7 @@ cdef class Repository:
 
         return oid
 
-    def create_blob_fromfile(Repository self, path):
+    def create_blob_fromworkdir(Repository self, path):
         cdef int error
         cdef GitOid oid = _empty_GitOid()
         cdef bytes py_path = _to_bytes(path)
