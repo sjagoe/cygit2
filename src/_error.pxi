@@ -106,9 +106,14 @@ ERRORS = {
 }
 
 
-cdef void assert_repository(Repository repo) except *:
+cdef void assert_Repository(Repository repo) except *:
     if repo._repository is NULL:
         raise LibGit2Error('Invalid Repository')
+
+
+cdef void assert_GitOid(GitOid oid):
+    if oid._oid is NULL:
+        raise LibGit2Error('OID Uninitialized')
 
 
 cdef void check_error(int error) except *:

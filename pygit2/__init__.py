@@ -25,9 +25,16 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-from cygit2._cygit2 import GitOid, Repository as BaseRepository, \
-    GitSignature as Signature, Config, GitReferenceType, GitCommit as Commit, \
-    GitObjectType
+from cygit2._cygit2 import (
+    Config,
+    GitBlob as Blob,
+    GitCommit as Commit,
+    GitObjectType,
+    GitOid,
+    GitReferenceType,
+    GitSignature as Signature,
+    Repository as BaseRepository,
+)
 from cygit2._cygit2 import LibGit2Error
 
 GIT_DIFF_INCLUDE_UNMODIFIED = None
