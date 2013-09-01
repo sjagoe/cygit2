@@ -38,6 +38,8 @@ from .oid import Oid
 from .repository import (
     Repository,
     discover_repository,
+    hash,
+    hashfile,
     init_repository,
 )
 
@@ -47,7 +49,6 @@ GIT_REF_SYMBOLIC = GitReferenceType.SYMBOLIC
 GIT_OBJ_ANY = GitObjectType.ANY
 GIT_OBJ_BLOB = GitObjectType.BLOB
 GIT_OBJ_COMMIT = GitObjectType.COMMIT
-hashfile = None
 GIT_SORT_TIME = None
 GIT_SORT_REVERSE = None
 

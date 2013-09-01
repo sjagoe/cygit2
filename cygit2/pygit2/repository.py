@@ -48,6 +48,16 @@ def discover_repository(path, across_fs=False, ceiling_dirs=None):
                                ceiling_dirs=ceiling_dirs)
 
 
+def hash(data):
+    oid = BaseRepository.hash(data)
+    return Oid(oid)
+
+
+def hashfile(filepath):
+    oid = BaseRepository.hashfile(filepath)
+    return Oid(oid)
+
+
 class Repository(BaseRepository):
 
     def __getitem__(self, oid_hex):

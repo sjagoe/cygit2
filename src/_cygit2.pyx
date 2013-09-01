@@ -81,8 +81,8 @@ from _repository cimport \
 from _revparse cimport git_revparse_single
 
 from _odb cimport \
-    git_odb_read_prefix, git_odb_free, git_odb_foreach, \
-    git_odb_object, git_odb_object_free, git_odb_object_id, \
+    git_odb_read_prefix, git_odb_free, git_odb_foreach, git_odb_hash, \
+    git_odb_hashfile, git_odb_object, git_odb_object_free, git_odb_object_id, \
     git_odb_object_data, git_odb_object_size, git_odb_object_type
 
 from _commit cimport \
@@ -1246,6 +1246,38 @@ cdef class Repository:
         error = git_repository_odb(cython.address(odb._odb), self._repository)
         check_error(error)
         return odb
+
+    @staticmethod
+    def hash(data):
+        cdef int error
+        cdef GitOid oid = GitOid()
+        oid._oid = <const_git_oid*>cython.address(oid._my_oid)
+        cdef bytes py_data = _to_bytes(data)
+        cdef size_t length = len(py_data)
+        cdef const char *raw = py_data
+
+        error = git_odb_hash(
+            <git_oid*>oid._oid, raw, length, GIT_OBJ_BLOB)
+
+        check_error(error)
+        assert_GitOid(oid)
+
+        return oid
+
+    @staticmethod
+    def hashfile(filepath):
+        cdef int error
+        cdef GitOid oid = GitOid()
+        oid._oid = <const_git_oid*>cython.address(oid._my_oid)
+        cdef bytes py_data = _to_bytes(filepath)
+        cdef const char *path = py_data
+
+        error = git_odb_hashfile(<git_oid*>oid._oid, path, GIT_OBJ_BLOB)
+
+        check_error(error)
+        assert_GitOid(oid)
+
+        return oid
 
     ### Repository open and creation ###
 

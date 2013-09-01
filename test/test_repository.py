@@ -151,14 +151,12 @@ class RepositoryTest(utils.BareRepoTestCase):
         parent = self.repo.revparse_single('HEAD^')
         self.assertEqual(parent.hex, PARENT_SHA)
 
-    @unittest.skip('Not implemented')
     def test_hash(self):
         data = "foobarbaz"
         hashed_sha1 = pygit2.hash(data)
         written_sha1 = self.repo.create_blob(data)
         self.assertEqual(hashed_sha1, written_sha1)
 
-    @unittest.skip('Not implemented')
     def test_hashfile(self):
         data = "bazbarfoo"
         tempfile_path = tempfile.mkstemp()[1]
