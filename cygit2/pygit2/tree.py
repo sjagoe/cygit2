@@ -24,46 +24,19 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-from cygit2._cygit2 import GitObjectType
-from .oid import Oid
+from .object import Object
 
 
-class Object(object):
+class Tree(Object):
 
-    TYPE_CONVERSIONS = None
+    def read_raw(self):
+        return self._object.read_raw()
 
-    def __init__(self, object_):
-        super(Object, self).__setattr__('_object', object_)
+    def __len__(self):
+        return len(self._object)
 
-    def __setattr__(self, key, value):
-        raise AttributeError(key)
+    def __getitem__(self, key):
+        return self._object[key]
 
-    @property
-    def oid(self):
-        return Oid(self._object.oid)
-
-    @property
-    def type(self):
-        return self._object.type
-
-    @property
-    def hex(self):
-        return self._object.hex
-
-    @classmethod
-    def convert(cls, object_):
-        if Object.TYPE_CONVERSIONS is None:
-            from .blob import Blob
-            from .commit import Commit
-            from .tree import Tree
-            Object.TYPE_CONVERSIONS = {
-                GitObjectType.BLOB: Blob,
-                GitObjectType.COMMIT: Commit,
-                GitObjectType.TREE: Tree,
-            }
-
-        type_ = object_.type
-        if type_ not in Object.TYPE_CONVERSIONS:
-            raise TypeError('{!r} not in pygit2 type registry'.format(type_))
-        klass = Object.TYPE_CONVERSIONS[type_]
-        return klass(object_)
+    def __contains__(self, key):
+        return key in self._object

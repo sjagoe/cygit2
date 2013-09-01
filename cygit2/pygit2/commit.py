@@ -24,46 +24,58 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-from cygit2._cygit2 import GitObjectType
+from .object import Object
 from .oid import Oid
 
 
-class Object(object):
+class Commit(Object):
 
-    TYPE_CONVERSIONS = None
+    def read_raw(self):
+        return self._object.read_raw()
 
-    def __init__(self, object_):
-        super(Object, self).__setattr__('_object', object_)
-
-    def __setattr__(self, key, value):
-        raise AttributeError(key)
+    def ancestor(self, generation):
+        return Commmit(self._object.ancestor(generation))
 
     @property
-    def oid(self):
-        return Oid(self._object.oid)
+    def message_encoding(self):
+        return self._object.message_encoding
 
     @property
-    def type(self):
-        return self._object.type
+    def message(self):
+        return self._object.message
 
     @property
-    def hex(self):
-        return self._object.hex
+    def _message(self):
+        return self._object._message
 
-    @classmethod
-    def convert(cls, object_):
-        if Object.TYPE_CONVERSIONS is None:
-            from .blob import Blob
-            from .commit import Commit
-            from .tree import Tree
-            Object.TYPE_CONVERSIONS = {
-                GitObjectType.BLOB: Blob,
-                GitObjectType.COMMIT: Commit,
-                GitObjectType.TREE: Tree,
-            }
+    @property
+    def commit_time(self):
+        return self._object.commit_time
 
-        type_ = object_.type
-        if type_ not in Object.TYPE_CONVERSIONS:
-            raise TypeError('{!r} not in pygit2 type registry'.format(type_))
-        klass = Object.TYPE_CONVERSIONS[type_]
-        return klass(object_)
+    @property
+    def time_offset(self):
+        return self._object.time_offset
+
+    @property
+    def committer(self):
+        return self._object.committer
+
+    @property
+    def author(self):
+        return self._object.author
+
+    @property
+    def tree(self):
+        return self.convert(self._object.tree)
+
+    @property
+    def tree_id(self):
+        return Oid(self._object.tree_id)
+
+    @property
+    def parents(self):
+        return [Commit(p) for p in self._object.parents]
+
+    @property
+    def parent_ids(self):
+        return [Oid(i) for i in self._object.parent_ids]

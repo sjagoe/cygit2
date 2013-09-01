@@ -24,15 +24,19 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
+import logging
 
 from cygit2._cygit2 import (
-    Repository as BaseRepository,
     GitOid,
+    Repository as BaseRepository,
 )
 from cygit2._cygit2 import LibGit2Error
 
-from .blob import Blob
+from .object import Object
 from .oid import Oid
+
+
+logger = logging.getLogger(__name__)
 
 
 def init_repository(path, bare=False):
@@ -50,7 +54,7 @@ class Repository(BaseRepository):
         oid = Oid.from_hex(oid_hex)
         try:
             core = super(Repository, self).__getitem__(oid.to_cygit2())
-            return Blob(core)
+            return Object.convert(core)
         except LibGit2Error:
             raise KeyError(oid_hex)
 

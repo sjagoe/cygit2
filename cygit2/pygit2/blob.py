@@ -24,22 +24,13 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-
-from cygit2._cygit2 import GitBlob
-from cygit2._cygit2 import LibGit2Error
-
 from .object import Object
-from .oid import Oid
 
 
 class Blob(Object):
 
     def read_raw(self):
         return self._object.read_raw()
-
-    @property
-    def oid(self):
-        return Oid(self._object.oid)
 
     @property
     def data(self):
