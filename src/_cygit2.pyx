@@ -100,7 +100,8 @@ from _config cimport \
     git_config_new, git_config_free, git_config_open_ondisk, \
     git_config_add_file_ondisk, const_git_config_entry, git_config_get_entry, \
     git_config_get_int64, git_config_get_bool, git_config_get_string, \
-    git_config_get_multivar, git_config_foreach, git_config_find_global, \
+    git_config_get_multivar, git_config_set_string, git_config_set_bool, \
+    git_config_set_int64, git_config_foreach, git_config_find_global, \
     git_config_find_system
 
 from _oid cimport \
@@ -695,6 +696,36 @@ cdef object _get_config_entry(git_config *config, name):
     check_error(error)
 
 
+cdef object _set_config_entry(git_config *config, name, value):
+    cdef int error
+    cdef int64_t c_int
+    cdef int c_bool
+    cdef char *c_string
+    cdef bytes py_string
+    cdef bytes bname = _to_bytes(name)
+
+    if isinstance(value, bool):
+        c_bool = value
+        error = git_config_set_bool(config, bname, c_bool)
+
+    elif isinstance(value, int):
+        c_int = value
+        error = git_config_set_int64(config, bname, c_int)
+        if error != GIT_OK:
+            raise ValueError()
+
+    elif isinstance(value, unicode) or isinstance(value, bytes):
+        if isinstance(value, unicode):
+            py_string = value.encode(DEFAULT_ENCODING)
+        else:
+            py_string = value
+        c_string = py_string
+
+        error = git_config_set_string(config, bname, c_string)
+
+    check_error(error)
+
+
 cdef int _git_config_get_multivar_cb(const_git_config_entry *entry,
                                      void *payload):
     cdef list result = <object>payload
@@ -838,9 +869,16 @@ cdef class Config:
         except LibGit2Error as e:
             raise ValueError(e.args[0].decode(DEFAULT_ENCODING))
 
+    cdef set_value(Config self, name, value):
+            _set_config_entry(self._config, name, value)
+
     cdef _check_name(Config self, name):
         if not isinstance(name, (bytes, str, unicode)):
             raise TypeError(type(name))
+
+    def __setitem__(Config self, name, value):
+        self._check_name(name)
+        self.set_value(name, value)
 
     def __getitem__(Config self, name):
         self._check_name(name)
