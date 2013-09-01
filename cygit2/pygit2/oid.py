@@ -47,4 +47,4 @@ class Oid(bytes):
 
     def __init__(self, gitoid):
         self._gitoid = gitoid
-        super(Oid, self).__init__(self._gitoid.raw)
+        super(Oid, self).__init__()
