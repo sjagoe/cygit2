@@ -24,7 +24,7 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-import os
+import sys
 
 from libc cimport stdlib
 from libc.stdint cimport int64_t
@@ -895,6 +895,9 @@ cdef class GitOid:
         if hex is not None:
             if isinstance(hex, unicode):
                 hex = hex.encode('ascii')
+            elif sys.version_info[0] > 2:
+                raise TypeError('Expected {}, got {} instead'.format(
+                    unicode, bytes))
             length = len(hex)
             c_string = hex
             error = git_oid_fromstrn(cython.address(self._my_oid),
