@@ -26,37 +26,13 @@
 # Boston, MA 02110-1301, USA.
 
 from cygit2._cygit2 import (
-    Config,
-    GitBlob as Blob,
-    GitCommit as Commit,
-    GitObjectType,
-    GitOid,
-    GitReferenceType,
-    GitSignature as Signature,
     Repository as BaseRepository,
+    GitOid,
 )
 from cygit2._cygit2 import LibGit2Error
 
-GIT_DIFF_INCLUDE_UNMODIFIED = None
-GIT_REF_OID = GitReferenceType.OID
-GIT_REF_SYMBOLIC = GitReferenceType.SYMBOLIC
-GIT_OBJ_ANY = GitObjectType.ANY
-GIT_OBJ_BLOB = GitObjectType.BLOB
-GIT_OBJ_COMMIT = GitObjectType.COMMIT
-hashfile = None
-GIT_SORT_TIME = None
-GIT_SORT_REVERSE = None
-
-GIT_STATUS_CURRENT = 0
-GIT_STATUS_INDEX_DELETED = 0
-GIT_STATUS_INDEX_MODIFIED = 0
-GIT_STATUS_INDEX_NEW = 0
-GIT_STATUS_WT_DELETED = 0
-GIT_STATUS_WT_MODIFIED = 0
-GIT_STATUS_WT_NEW = 0
-
-
-GitError = LibGit2Error
+from .blob import Blob
+from .oid import Oid
 
 
 def init_repository(path, bare=False):
@@ -71,31 +47,31 @@ def discover_repository(path, across_fs=False, ceiling_dirs=None):
 class Repository(BaseRepository):
 
     def __getitem__(self, oid_hex):
-        if isinstance(oid_hex, GitOid):
-            oid = oid_hex
-        else:
-            oid = GitOid(oid_hex)
+        oid = Oid.from_hex(oid_hex)
         try:
-            return super(Repository, self).__getitem__(oid)
+            core = super(Repository, self).__getitem__(oid.to_cygit2())
+            return Blob(core)
         except LibGit2Error:
             raise KeyError(oid_hex)
 
     def __contains__(self, oid_hex):
-        if isinstance(oid_hex, GitOid):
-            oid = oid_hex
-        else:
-            oid = GitOid(oid_hex)
+        oid = Oid.from_hex(oid_hex)
         try:
-            return super(Repository, self).__contains__(oid)
+            return super(Repository, self).__contains__(oid.to_cygit2())
         except KeyError:
             return False
 
     def read(self, oid_hex):
-        if isinstance(oid_hex, GitOid):
-            oid = oid_hex
-        else:
-            oid = GitOid(oid_hex)
+        oid = Oid.from_hex(oid_hex)
         try:
-            return super(Repository, self).read(oid)
+            return super(Repository, self).read(oid.to_cygit2())
         except LibGit2Error:
             raise KeyError(oid_hex)
+
+    def create_blob(self, content):
+        oid = super(Repository, self).create_blob(content)
+        return Oid(oid)
+
+    def create_blob_fromfile(self, path):
+        oid = super(Repository, self).create_blob_fromfile(path)
+        return Oid(oid)

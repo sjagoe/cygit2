@@ -104,7 +104,7 @@ from _config cimport \
 
 from _oid cimport \
     git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, git_oid_fromraw, \
-    GIT_OID_MINPREFIXLEN
+    GIT_OID_MINPREFIXLEN, GIT_OID_RAWSZ, GIT_OID_HEXSZ
 
 from _refs cimport \
     git_reference_free, git_reference_lookup, \
@@ -857,7 +857,7 @@ cdef class GitOid:
 
     def __cinit__(GitOid self):
         self._oid = NULL
-        self.length = 40
+        self.length = GIT_OID_HEXSZ
         self._owner = None
 
     def __init__(GitOid self, py_string=None):
@@ -910,10 +910,10 @@ cdef class GitOid:
 
     cdef object format(GitOid self):
         assert_GitOid(self)
-        cdef char *hex_str = <char*>stdlib.malloc(sizeof(char)*40)
+        cdef char *hex_str = <char*>stdlib.malloc(GIT_OID_HEXSZ)
         git_oid_fmt(hex_str, self._oid)
         try:
-            py_hex_str = hex_str[:40]
+            py_hex_str = hex_str[:GIT_OID_HEXSZ]
         finally:
             stdlib.free(hex_str)
         return py_hex_str.decode('ascii')
@@ -923,8 +923,15 @@ cdef class GitOid:
             assert_GitOid(self)
             return self.format()[:self.length]
 
+    property raw:
+        def __get__(GitOid self):
+            assert_GitOid(self)
+            cdef unsigned char *string = self._oid.id
+            cdef bytes py_string = string[:GIT_OID_RAWSZ]
+            return py_string
+
     def __repr__(GitOid self):
-        return repr(self.hex)
+        return 'GitOid({!r})'.format(self.hex)
 
 
 cdef GitOid make_oid(object owner, const_git_oid *oidp):
