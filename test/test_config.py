@@ -30,22 +30,24 @@
 import os
 import unittest
 
-import pygit2
+from pygit2 import Config
 from . import utils
 
 
-config_filename = "test_config"
+CONFIG_FILENAME = "test_config"
+
 
 def foreach_test_wrapper(key, name, lst):
     lst[key] = name
     return 0
 foreach_test_wrapper.__test__ = False
 
+
 class ConfigTest(utils.RepoTestCase):
 
     def tearDown(self):
         try:
-            os.remove(config_filename)
+            os.remove(CONFIG_FILENAME)
         except OSError:
             pass
 
@@ -54,41 +56,43 @@ class ConfigTest(utils.RepoTestCase):
 
     def test_global_config(self):
         try:
-            self.assertNotEqual(None, pygit2.Config.get_global_config())
+            self.assertNotEqual(None, Config.get_global_config())
         except IOError:
+            # There is no user config
             pass
 
     def test_system_config(self):
         try:
-            self.assertNotEqual(None, pygit2.Config.get_system_config())
+            self.assertNotEqual(None, Config.get_system_config())
         except IOError:
+            # There is no system config
             pass
 
-    @unittest.skip('Not implemented')
     def test_new(self):
-        open(config_filename, 'w').close() # touch file
-        config_write = pygit2.Config(config_filename)
+        # Touch file
+        open(CONFIG_FILENAME, 'w').close()
 
+        config_write = Config(CONFIG_FILENAME)
         self.assertNotEqual(config_write, None)
 
         config_write['core.bare'] = False
         config_write['core.editor'] = 'ed'
 
-        config_read = pygit2.Config(config_filename)
+        config_read = Config(CONFIG_FILENAME)
         self.assertTrue('core.bare' in config_read)
         self.assertFalse(config_read['core.bare'])
         self.assertTrue('core.editor' in config_read)
         self.assertEqual(config_read['core.editor'], 'ed')
 
     def test_add(self):
-        config = pygit2.Config()
+        config = Config()
 
-        new_file = open(config_filename, "w")
+        new_file = open(CONFIG_FILENAME, "w")
         new_file.write("[this]\n\tthat = true\n")
         new_file.write("[something \"other\"]\n\there = false")
         new_file.close()
 
-        config.add_file(config_filename, 0)
+        config.add_file(CONFIG_FILENAME, 0)
         self.assertTrue('this.that' in config)
         self.assertTrue(config['this.that'])
         self.assertTrue('something.other.here' in config)
@@ -111,18 +115,17 @@ class ConfigTest(utils.RepoTestCase):
         self.assertTrue('core.repositoryformatversion' in config)
         self.assertEqual(config['core.repositoryformatversion'], 0)
 
-        new_file = open(config_filename, "w")
+        new_file = open(CONFIG_FILENAME, "w")
         new_file.write("[this]\n\tthat = foobar\n\tthat = foobeer\n")
         new_file.close()
 
-        config.add_file(config_filename, 0)
+        config.add_file(CONFIG_FILENAME, 0)
         self.assertTrue('this.that' in config)
         self.assertEqual(len(config.get_multivar('this.that')), 2)
         l = config.get_multivar('this.that', 'bar')
         self.assertEqual(len(l), 1)
         self.assertEqual(l[0], 'foobar')
 
-    @unittest.skip('Not implemented')
     def test_write(self):
         config = self.repo.config
 
@@ -151,20 +154,25 @@ class ConfigTest(utils.RepoTestCase):
         del config['core.dummy3']
         self.assertFalse('core.dummy3' in config)
 
-        new_file = open(config_filename, "w")
+        new_file = open(CONFIG_FILENAME, "w")
         new_file.write("[this]\n\tthat = foobar\n\tthat = foobeer\n")
         new_file.close()
 
-        config.add_file(config_filename, 5)
+        config.add_file(CONFIG_FILENAME, 5)
         self.assertTrue('this.that' in config)
+        l = config.get_multivar('this.that', 'foo.*')
+        self.assertEqual(len(l), 2)
+
         config.set_multivar('this.that', '^.*beer', 'fool')
         l = config.get_multivar('this.that', 'fool')
         self.assertEqual(len(l), 1)
         self.assertEqual(l[0], 'fool')
-        config.set_multivar('this.that', 'foo.*', '123456')
+
+        config.set_multivar('this.that', 'foo.*', 'foo-123456')
         l = config.get_multivar('this.that', 'foo.*')
+        self.assertEqual(len(l), 2)
         for i in l:
-            self.assertEqual(i, '123456')
+            self.assertEqual(i, 'foo-123456')
 
     def test_foreach(self):
         config = self.repo.config

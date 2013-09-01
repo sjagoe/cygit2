@@ -38,7 +38,6 @@ from . import utils
 TAG_SHA = '3d2962987c695a29f1f80b6c3aa4ec046ef44369'
 
 
-@unittest.skip('Not implemented')
 class TagTest(utils.BareRepoTestCase):
 
     def test_read_tag(self):
@@ -73,7 +72,7 @@ class TagTest(utils.BareRepoTestCase):
 
         self.assertEqual('3ee44658fd11660e828dfc96b9b5c5f38d5b49bb', tag.hex)
         self.assertEqual(name, tag.name)
-        self.assertEqual(target, utils.oid_to_hex(tag.target))
+        self.assertEqual(target, tag.target.hex)
         self.assertEqualSignature(tagger, tag.tagger)
         self.assertEqual(message, tag.message)
         self.assertEqual(name, self.repo[tag.hex].name)

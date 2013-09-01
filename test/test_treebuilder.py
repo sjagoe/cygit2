@@ -37,31 +37,41 @@ from . import utils
 TREE_SHA = '967fce8df97cc71722d3c2a5930ef3e6f1d27b12'
 
 
-@unittest.skip('Not implemented')
 class TreeBuilderTest(utils.BareRepoTestCase):
 
     def test_new_empty_treebuilder(self):
         self.repo.TreeBuilder()
 
+
     def test_noop_treebuilder(self):
         tree = self.repo[TREE_SHA]
         bld = self.repo.TreeBuilder(TREE_SHA)
         result = bld.write()
+
+        self.assertEqual(len(bld), len(tree))
         self.assertEqual(tree.oid, result)
+
 
     def test_noop_treebuilder_from_tree(self):
         tree = self.repo[TREE_SHA]
         bld = self.repo.TreeBuilder(tree)
         result = bld.write()
+
+        self.assertEqual(len(bld), len(tree))
         self.assertEqual(tree.oid, result)
+
 
     def test_rebuild_treebuilder(self):
         tree = self.repo[TREE_SHA]
         bld = self.repo.TreeBuilder()
-        for e in tree:
-            bld.insert(e.name, e.hex, e.filemode)
-
+        for entry in tree:
+            name = entry.name
+            self.assertTrue(bld.get(name) is None)
+            bld.insert(name, entry.hex, entry.filemode)
+            self.assertEqual(bld.get(name).oid, entry.oid)
         result = bld.write()
+
+        self.assertEqual(len(bld), len(tree))
         self.assertEqual(tree.oid, result)
 
 
