@@ -116,9 +116,6 @@ class ConfigTest(utils.RepoTestCase):
         self.assertTrue('core.repositoryformatversion' in config)
         self.assertEqual(config['core.repositoryformatversion'], 0)
 
-    # Problem in underlying libgit2 git_config_get_multivar ?
-    @unittest.expectedFailure
-    def test_read_multivar(self):
         new_file = open(CONFIG_FILENAME, "w")
         new_file.write("[this]\n\tthat = foobar\n\tthat = foobeer\n")
         new_file.close()

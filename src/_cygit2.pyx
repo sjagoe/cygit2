@@ -804,7 +804,12 @@ cdef class Config:
         error = git_config_get_multivar(
             self._config, c_string, c_regexp,
             _git_config_get_multivar_cb, <void*>result)
+
+        if error == GIT_ENOTFOUND and len(result) > 0:
+            return result
+
         check_error(error)
+
         return result
 
     def foreach(Config self, object callback, object py_payload=None):
