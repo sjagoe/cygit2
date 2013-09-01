@@ -126,7 +126,6 @@ class ConfigTest(utils.RepoTestCase):
         self.assertEqual(len(l), 1)
         self.assertEqual(l[0], 'foobar')
 
-    @unittest.skip('Not Implemented')
     def test_write(self):
         config = self.repo.config
 

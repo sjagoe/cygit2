@@ -96,13 +96,14 @@ from _commit cimport \
 from _signature cimport \
     git_signature_free, git_signature_new, git_signature_now
 
-from _config cimport \
-    git_config_new, git_config_free, git_config_open_ondisk, \
-    git_config_add_file_ondisk, const_git_config_entry, git_config_get_entry, \
-    git_config_get_int64, git_config_get_bool, git_config_get_string, \
-    git_config_get_multivar, git_config_set_string, git_config_set_bool, \
-    git_config_set_int64, git_config_foreach, git_config_find_global, \
-    git_config_find_system
+from _config cimport (
+    git_config_new, git_config_free, git_config_open_ondisk,
+    git_config_add_file_ondisk, const_git_config_entry, git_config_get_entry,
+    git_config_get_int64, git_config_get_bool, git_config_get_string,
+    git_config_get_multivar, git_config_set_string, git_config_set_bool,
+    git_config_set_int64, git_config_set_multivar, git_config_delete_entry,
+    git_config_foreach, git_config_find_global, git_config_find_system,
+)
 
 from _oid cimport \
     git_oid, const_git_oid, git_oid_fmt, git_oid_fromstrn, git_oid_fromraw, \
@@ -696,36 +697,6 @@ cdef object _get_config_entry(git_config *config, name):
     check_error(error)
 
 
-cdef object _set_config_entry(git_config *config, name, value):
-    cdef int error
-    cdef int64_t c_int
-    cdef int c_bool
-    cdef char *c_string
-    cdef bytes py_string
-    cdef bytes bname = _to_bytes(name)
-
-    if isinstance(value, bool):
-        c_bool = value
-        error = git_config_set_bool(config, bname, c_bool)
-
-    elif isinstance(value, int):
-        c_int = value
-        error = git_config_set_int64(config, bname, c_int)
-        if error != GIT_OK:
-            raise ValueError()
-
-    elif isinstance(value, unicode) or isinstance(value, bytes):
-        if isinstance(value, unicode):
-            py_string = value.encode(DEFAULT_ENCODING)
-        else:
-            py_string = value
-        c_string = py_string
-
-        error = git_config_set_string(config, bname, c_string)
-
-    check_error(error)
-
-
 cdef int _git_config_get_multivar_cb(const_git_config_entry *entry,
                                      void *payload):
     cdef list result = <object>payload
@@ -843,6 +814,18 @@ cdef class Config:
 
         return result
 
+    def set_multivar(Config self, name, regexp, value):
+        cdef int error
+        cdef bytes py_name = _to_bytes(name)
+        cdef const_char *c_name = py_name
+        cdef bytes py_regexp = _to_bytes(regexp)
+        cdef const_char *c_regexp = py_regexp
+        cdef bytes py_value = _to_bytes(value)
+        cdef const_char *c_value = py_value
+
+        error = git_config_set_multivar(self._config, c_name, c_regexp, c_value)
+        check_error(error)
+
     def foreach(Config self, object callback, object py_payload=None):
         cdef int error
         cdef tuple payload = (callback, py_payload)
@@ -870,7 +853,41 @@ cdef class Config:
             raise ValueError(e.args[0].decode(DEFAULT_ENCODING))
 
     cdef set_value(Config self, name, value):
-            _set_config_entry(self._config, name, value)
+        cdef int error
+        cdef int64_t c_int
+        cdef int c_bool
+        cdef char *c_string
+        cdef bytes py_string
+        cdef bytes bname = _to_bytes(name)
+        cdef git_config *config = self._config
+
+        if isinstance(value, bool):
+            c_bool = value
+            error = git_config_set_bool(config, bname, c_bool)
+
+        elif isinstance(value, int):
+            c_int = value
+            error = git_config_set_int64(config, bname, c_int)
+            if error != GIT_OK:
+                raise ValueError()
+
+        elif isinstance(value, unicode) or isinstance(value, bytes):
+            if isinstance(value, unicode):
+                py_string = value.encode(DEFAULT_ENCODING)
+            else:
+                py_string = value
+            c_string = py_string
+
+            error = git_config_set_string(config, bname, c_string)
+
+        check_error(error)
+
+    cdef delete_entry(Config self, name):
+        cdef int error
+        cdef bytes bname = _to_bytes(name)
+        cdef git_config *config = self._config
+        error = git_config_delete_entry(config, bname)
+        check_error(error)
 
     cdef _check_name(Config self, name):
         if not isinstance(name, (bytes, str, unicode)):
@@ -884,9 +901,17 @@ cdef class Config:
         self._check_name(name)
         return self.get_value(name)
 
+    def __delitem__(Config self, name):
+        self._check_name(name)
+        self.delete_entry(name)
+
     def __contains__(Config self, name):
         self._check_name(name)
-        return self.get_entry(name) is not None # FIXME
+        try:
+            self.get_entry(name)
+        except LibGit2ConfigError:
+            return False
+        return True
 
 
 cdef GitOid _empty_GitOid():
