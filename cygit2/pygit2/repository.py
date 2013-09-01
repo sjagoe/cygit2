@@ -50,12 +50,18 @@ def discover_repository(path, across_fs=False, ceiling_dirs=None):
                                ceiling_dirs=ceiling_dirs)
 
 
+def clone_repository():
+    raise NotImplementedError()
+
+
 def hash(data):
-    return BaseRepository.hash(data)
+    oid = BaseRepository.hash(data)
+    return oid
 
 
 def hashfile(filepath):
-    return BaseRepository.hashfile(filepath)
+    oid = BaseRepository.hashfile(filepath)
+    return oid
 
 
 class Repository(BaseRepository):

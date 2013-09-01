@@ -39,6 +39,7 @@ from cygit2._cygit2 import LibGit2Error
 from .blob import Blob
 from .repository import (
     Repository,
+    clone_repository,
     discover_repository,
     hash,
     hashfile,
@@ -46,6 +47,8 @@ from .repository import (
 )
 
 GIT_DIFF_INCLUDE_UNMODIFIED = None
+GIT_DIFF_IGNORE_WHITESPACE = None
+GIT_DIFF_IGNORE_WHITESPACE_EOL = None
 GIT_REF_OID = GitReferenceType.OID
 GIT_REF_SYMBOLIC = GitReferenceType.SYMBOLIC
 GIT_OBJ_ANY = GitObjectType.ANY
