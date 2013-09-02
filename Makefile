@@ -73,6 +73,7 @@ includes: \
 	src/_gitobject.pxi \
 	src/_gitodb.pxi \
 	src/_gitoid.pxi \
+	src/_gitreference.pxi \
 	src/_gitsignature.pxi \
 	src/_gittree.pxi
 
