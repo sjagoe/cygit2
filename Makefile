@@ -69,6 +69,7 @@ includes: \
 	src/_error.pxi \
 	src/_gitblob.pxi \
 	src/_gitcommit.pxi \
+	src/_gitconfig.pxi \
 	src/_gitobject.pxi \
 	src/_gitodb.pxi \
 	src/_gitsignature.pxi \

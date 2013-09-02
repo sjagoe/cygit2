@@ -62,6 +62,7 @@ ext_modules = [
             'src/_gitcommit.pxi',
             'src/_gitblob.pxi',
             'src/_gittree.pxi',
+            'src/_gitconfig.pxi',
 
             # Definitions
             'src/_attr.pxd',
