@@ -97,7 +97,6 @@ class BlobTest(utils.RepoTestCase):
         self.assertRaises(KeyError, self.repo.create_blob_fromworkdir, path)
 
 
-    @unittest.skip('Not Implemented')
     def test_create_blob_fromdisk(self):
         path = join(dirname(__file__), 'data', self.repo_dir + '.tar')
         blob_oid = self.repo.create_blob_fromdisk(path)
