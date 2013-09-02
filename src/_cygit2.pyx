@@ -33,23 +33,11 @@ import cython
 
 from libc.string cimport const_char, const_uchar
 
-from _types cimport \
-    const_git_signature, \
-    git_blob, \
-    git_commit, \
-    git_config, \
-    git_object, \
-    git_time_t, \
-    git_reference, \
-    git_reflog, \
-    const_git_reflog_entry, \
-    git_ref_t, \
-    git_tree_entry, \
-    const_git_tree_entry, \
-    git_off_t, \
-    \
-    GIT_PATH_MAX, \
-    MAXPATHLEN
+from _types cimport (
+    git_off_t,
+    git_ref_t,
+    git_time_t,
+)
 
 include "_encoding.pxi"
 include "_error.pxi"

@@ -30,7 +30,6 @@ from _types cimport (
     const_git_tree_entry,
 )
 
-
 from _tree cimport \
     git_tree_free, git_tree_lookup_prefix, git_tree_id, \
     git_tree_entry_bypath, git_tree_entry_byindex, git_tree_entrycount, \

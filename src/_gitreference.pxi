@@ -25,6 +25,12 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
+from _types cimport (
+    git_reference,
+    git_reflog,
+    const_git_reflog_entry,
+)
+
 from _reflog cimport (
     git_reflog_free,
     git_reflog_read,

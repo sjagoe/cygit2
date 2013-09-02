@@ -25,6 +25,7 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
+from _types cimport git_blob
 from _blob cimport (
     git_blob_free,
     git_blob_id,

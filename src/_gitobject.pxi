@@ -25,6 +25,7 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
+from _types cimport git_object
 from _object cimport (
     git_object_free,
     git_object_type,

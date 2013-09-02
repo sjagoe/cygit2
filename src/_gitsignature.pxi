@@ -24,7 +24,7 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-from _types cimport git_signature
+from _types cimport git_signature, const_git_signature
 from _signature cimport (
     git_signature_free,
     git_signature_new,

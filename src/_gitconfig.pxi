@@ -25,6 +25,11 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
+from _types cimport (
+    GIT_PATH_MAX,
+    git_config,
+)
+
 from _config cimport (
     git_config_new, git_config_free, git_config_open_ondisk,
     git_config_add_file_ondisk, const_git_config_entry, git_config_get_entry,

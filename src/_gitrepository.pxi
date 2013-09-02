@@ -66,6 +66,7 @@ from _repository cimport (
 )
 
 from _types cimport (
+    MAXPATHLEN,
     git_repository,
     git_tree,
     git_otype,

@@ -25,6 +25,7 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
+from _types cimport git_commit
 from _commit cimport (
     git_commit_author,
     git_commit_committer,
