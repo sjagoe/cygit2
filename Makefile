@@ -13,7 +13,7 @@ py2: build2 test2
 py3: build3 test3
 
 
-files: src/_cygit2.pyx src/_error.pxi src/_enum.pxi src/_encoding.pxi src/_attr.pxd src/_blob.pxd src/_branch.pxd src/_checkout.pxd src/_clone.pxd src/_commit.pxd src/_common.pxd src/_config.pxd src/_cred_helpers.pxd src/_diff.pxd src/_errors.pxd src/_graph.pxd src/_ignore.pxd src/_indexer.pxd src/_index.pxd src/_merge.pxd src/_message.pxd src/_net.pxd src/_notes.pxd src/_object.pxd src/_odb_backend.pxd src/_odb.pxd src/_oid.pxd src/_pack.pxd src/_push.pxd src/_refdb_backend.pxd src/_refdb.pxd src/_reflog.pxd src/_refspec.pxd src/_refs.pxd src/_remote.pxd src/_repository.pxd src/_reset.pxd src/_revparse.pxd src/_revwalk.pxd src/_signature.pxd src/_stash.pxd src/_status.pxd src/_strarray.pxd src/_submodule.pxd src/_tag.pxd src/_threads.pxd src/_trace.pxd src/_transport.pxd src/_tree.pxd src/_types.pxd src/_version.pxd
+files: src/_cygit2.pyx src/_error.pxi src/_encoding.pxi src/_cygit2_types.pxi src/_gitodb.pxi src/_gitsignature.pxi src/_enum.pxi src/_attr.pxd src/_blob.pxd src/_branch.pxd src/_checkout.pxd src/_clone.pxd src/_commit.pxd src/_common.pxd src/_config.pxd src/_cred_helpers.pxd src/_diff.pxd src/_errors.pxd src/_graph.pxd src/_ignore.pxd src/_indexer.pxd src/_index.pxd src/_merge.pxd src/_message.pxd src/_net.pxd src/_notes.pxd src/_object.pxd src/_odb_backend.pxd src/_odb.pxd src/_oid.pxd src/_pack.pxd src/_push.pxd src/_refdb_backend.pxd src/_refdb.pxd src/_reflog.pxd src/_refspec.pxd src/_refs.pxd src/_remote.pxd src/_repository.pxd src/_reset.pxd src/_revparse.pxd src/_revwalk.pxd src/_signature.pxd src/_stash.pxd src/_status.pxd src/_strarray.pxd src/_submodule.pxd src/_tag.pxd src/_threads.pxd src/_trace.pxd src/_transport.pxd src/_tree.pxd src/_types.pxd src/_version.pxd
 
 
 build2: files

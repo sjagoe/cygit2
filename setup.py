@@ -55,6 +55,9 @@ ext_modules = [
             'src/_error.pxi',
             'src/_enum.pxi',
             'src/_encoding.pxi',
+            'src/_cygit2_types.pxi',
+            'src/_gitodb.pxi',
+            'src/_gitsignature.pxi',
 
             # Definitions
             'src/_attr.pxd',

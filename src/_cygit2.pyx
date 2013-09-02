@@ -36,11 +36,9 @@ from libc.string cimport const_char, const_uchar
 from _types cimport \
     const_git_signature, \
     git_blob, \
-    git_signature, \
     git_commit, \
     git_config, \
     git_object, \
-    git_odb, \
     git_repository, \
     git_time_t, \
     git_reference, \
@@ -53,20 +51,6 @@ from _types cimport \
     git_otype, \
     git_off_t, \
     \
-    GIT_OBJ_ANY, \
-    GIT_OBJ_BAD, \
-    GIT_OBJ__EXT1, \
-    GIT_OBJ_COMMIT, \
-    GIT_OBJ_TREE, \
-    GIT_OBJ_BLOB, \
-    GIT_OBJ_TAG, \
-    GIT_OBJ__EXT2, \
-    GIT_OBJ_OFS_DELTA, \
-    GIT_OBJ_REF_DELTA, \
-    GIT_REF_INVALID, \
-    GIT_REF_OID, \
-    GIT_REF_SYMBOLIC, \
-    GIT_REF_LISTALL, \
     GIT_PATH_MAX, \
     MAXPATHLEN
 
@@ -79,12 +63,12 @@ from _repository cimport \
     git_repository_head_detached, git_repository_is_bare, \
     git_repository_is_empty, git_repository_workdir
 
-from _revparse cimport git_revparse_single
+from _odb cimport (
+    git_odb_hash,
+    git_odb_hashfile,
+)
 
-from _odb cimport \
-    git_odb_read_prefix, git_odb_free, git_odb_foreach, git_odb_hash, \
-    git_odb_hashfile, git_odb_object, git_odb_object_free, git_odb_object_id, \
-    git_odb_object_data, git_odb_object_size, git_odb_object_type
+from _revparse cimport git_revparse_single
 
 from _commit cimport \
     git_commit_free, git_commit_lookup_prefix, git_commit_id, \
@@ -92,9 +76,6 @@ from _commit cimport \
     git_commit_time_offset, git_commit_committer, git_commit_author, \
     git_commit_tree, git_commit_tree_id, git_commit_parentcount, \
     git_commit_parent, git_commit_parent_id, git_commit_nth_gen_ancestor
-
-from _signature cimport \
-    git_signature_free, git_signature_new, git_signature_now
 
 from _config cimport (
     git_config_new, git_config_free, git_config_open_ondisk,
@@ -175,284 +156,9 @@ from _object cimport \
 include "_encoding.pxi"
 include "_error.pxi"
 include "_enum.pxi"
-
-
-@cython.internal
-cdef class _GitReferenceType:
-
-    cdef readonly EnumValue INVALID
-    cdef readonly EnumValue OID
-    cdef readonly EnumValue SYMBOLIC
-    cdef readonly EnumValue LISTALL
-
-    def __init__(_GitReferenceType self):
-        self.INVALID  = EnumValue('GitReferenceType.INVALID', GIT_REF_INVALID)
-        self.OID      = EnumValue('GitReferenceType.OID', GIT_REF_OID)
-        self.SYMBOLIC = EnumValue('GitReferenceType.SYMBOLIC', GIT_REF_SYMBOLIC)
-        self.LISTALL  = EnumValue('GitReferenceType.LISTALL', GIT_REF_LISTALL)
-
-    cdef _from_git_ref_t(_GitReferenceType self, git_ref_t type_):
-        for item in (self.INVALID,
-                     self.OID,
-                     self.SYMBOLIC,
-                     self.LISTALL):
-            if type_ == item.value:
-                return item
-        raise LibGit2Error('Invalid GitReferenceType: {!r}'.format(type_))
-
-
-GitReferenceType = _GitReferenceType()
-
-
-@cython.internal
-cdef class _GitObjectType:
-
-    cdef readonly EnumValue ANY
-    cdef readonly EnumValue BAD
-    cdef readonly EnumValue _EXT1
-    cdef readonly EnumValue COMMIT
-    cdef readonly EnumValue TREE
-    cdef readonly EnumValue BLOB
-    cdef readonly EnumValue TAG
-    cdef readonly EnumValue _EXT2
-    cdef readonly EnumValue OFS_DELTA
-    cdef readonly EnumValue REF_DELTA
-
-    def __init__(_GitObjectType self):
-        self.ANY       = EnumValue('GitObjectType.ANY', GIT_OBJ_ANY)
-        self.BAD       = EnumValue('GitObjectType.BAD', GIT_OBJ_BAD)
-        self._EXT1     = EnumValue('GitObjectType._EXT1', GIT_OBJ__EXT1)
-        self.COMMIT    = EnumValue('GitObjectType.COMMIT', GIT_OBJ_COMMIT)
-        self.TREE      = EnumValue('GitObjectType.TREE', GIT_OBJ_TREE)
-        self.BLOB      = EnumValue('GitObjectType.BLOB', GIT_OBJ_BLOB)
-        self.TAG       = EnumValue('GitObjectType.TAG', GIT_OBJ_TAG)
-        self._EXT2     = EnumValue('GitObjectType._EXT2', GIT_OBJ__EXT2)
-        self.OFS_DELTA = EnumValue('GitObjectType.OFS_DELTA', GIT_OBJ_OFS_DELTA)
-        self.REF_DELTA = EnumValue('GitObjectType.REF_DELTA', GIT_OBJ_REF_DELTA)
-
-    cdef EnumValue _from_uint(_GitObjectType self, unsigned int type):
-        for item in (self.ANY,
-                     self.BAD,
-                     self._EXT1,
-                     self.COMMIT,
-                     self.TREE,
-                     self.BLOB,
-                     self.TAG,
-                     self._EXT2,
-                     self.OFS_DELTA,
-                     self.REF_DELTA):
-            if type == item.value:
-                return item
-
-
-GitObjectType = _GitObjectType()
-
-
-cdef class GitOdbObject:
-
-    cdef git_odb_object *_object
-
-    def __cinit__(GitOdbObject self):
-        self._object = NULL
-
-    def __dealloc__(GitOdbObject self):
-        if self._object is not NULL:
-            git_odb_object_free(self._object)
-
-    cdef _compare_type_contents(GitOdbObject self,
-                                EnumValue other_type, other_contents,
-                                int op):
-        if op == 2: # ==
-            return self.type == other_type and self.data == other_contents
-        elif op == 3: # !=
-            return not (self.type == other_type and self.data == other_contents)
-        elif op == 0: # <
-            return self.type < other_type and self.data < other_contents
-        elif op == 1: # <= (not >)
-            return not (self.type > other_type and self.data > other_contents)
-        elif op == 4: # >
-            return self.type > other_type and self.data > other_contents
-        elif op == 5: # >= (not <)
-            return not (self.type < other_type and self.data < other_contents)
-
-    def __richcmp__(GitOdbObject self, other, int op):
-        cdef bytes other_contents
-        cdef EnumValue other_type
-        if isinstance(other, tuple):
-            other_type = other[0]
-            if isinstance(other[1], unicode):
-                other_contents = other[1].encode(DEFAULT_ENCODING)
-            else:
-                other_contents = other[1]
-            return self._compare_type_contents(other_type, other_contents, op)
-        if not isinstance(other, GitOdbObject):
-            return False
-        if op == 2: # ==
-            return self.oid == other.oid
-        elif op == 3: # !=
-            return self.oid != other.oid
-        elif op == 0: # <
-            return self.oid < other.oid
-        elif op == 1: # <= (not >)
-            return not (self.oid > other.oid)
-        elif op == 4: # >
-            return self.oid > other.oid
-        elif op == 5: # >= (not <)
-            return not (self.oid < other.oid)
-
-    property oid:
-        def __get__(GitOdbObject self):
-            cdef const_git_oid *oidp
-            oidp = git_odb_object_id(self._object)
-            return make_oid(self, oidp)
-
-    property data:
-        def __get__(GitOdbObject self):
-            cdef const_char *string = <const_char*>git_odb_object_data(self._object)
-            cdef bytes data = <char*>string
-            return data
-
-    property size:
-        def __get__(GitOdbObject self):
-            cdef size_t size = git_odb_object_size(self._object)
-            return size
-
-    property type:
-        def __get__(GitOdbObject self):
-            cdef _GitObjectType ObjType = GitObjectType
-            cdef unsigned int utype = git_odb_object_type(self._object)
-            return ObjType._from_uint(utype)
-
-    def __repr__(GitOdbObject self):
-        return '<GitOdbObject type={!r} size={!r}>'.format(self.type, self.size)
-
-
-cdef int _GitOdb_get_oids(const_git_oid *oid, void *payload):
-    cdef tuple py_payload = <object>payload
-    owner, result = py_payload
-    result.append(make_oid(owner, oid))
-    return 0
-
-
-@cython.internal
-cdef class GitOdb:
-
-    cdef git_odb *_odb
-
-    def __cinit__(GitOdb self):
-        self._odb = NULL
-
-    def __dealloc__(GitOdb self):
-        if self._odb is not NULL:
-            git_odb_free(self._odb)
-
-    cdef GitOdbObject read_prefix(GitOdb self, GitOid oid):
-        cdef int error
-        cdef GitOdbObject obj = GitOdbObject()
-        assert_GitOid(oid)
-        error = git_odb_read_prefix(cython.address(obj._object), self._odb,
-                                    oid._oid, oid.length)
-        check_error(error)
-        return obj
-
-    cdef oids(GitOdb self):
-        cdef int error
-        cdef object payload = (self, [])
-        error = git_odb_foreach(self._odb, _GitOdb_get_oids, <void*>payload)
-        return payload[1]
-
-
-cdef class GitSignature:
-
-    cdef git_signature *_signature
-
-    cdef object _owner
-
-    cdef readonly unicode _encoding
-
-    def __cinit__(GitSignature self):
-        self._signature = NULL
-        self._owner = None
-
-    def __init__(GitSignature self, name=None, email=None, time=None,
-                 offset=None, encoding=None):
-        cdef int error
-        cdef bytes bytes_name
-        cdef bytes bemail
-        cdef char *c_name = NULL
-        cdef char *c_email = NULL
-        cdef git_time_t c_time = -1
-        cdef int c_offset = 0
-
-        if name is None or email is None:
-            self._encoding = DEFAULT_ENCODING
-            return # Fixme
-
-        if encoding is not None:
-            encoding = encoding[:len(encoding)]
-        else:
-            encoding = u'ascii'
-
-        if name is not None:
-            bytes_name = _to_bytes(name, encoding)
-            c_name = bytes_name
-        if email is not None:
-            bemail = _to_bytes(email, encoding)
-            c_email = bemail
-        if time is not None:
-            c_time = time
-        if offset is not None:
-            c_offset = offset
-
-        if c_time != -1:
-            error = git_signature_new(cython.address(self._signature), c_name,
-                                      c_email, c_time, c_offset)
-        else:
-            error = git_signature_now(cython.address(self._signature), c_name,
-                                      c_email)
-        check_error(error)
-
-        self._encoding = encoding
-
-    def __dealloc__(GitSignature self):
-        if self._signature is not NULL and self._owner is None:
-            git_signature_free(self._signature)
-
-    property _name:
-        def __get__(GitSignature self):
-            cdef bytes py_string = self._signature.name
-            return py_string
-
-    property name:
-        def __get__(GitSignature self):
-            return self._name.decode(self._encoding)
-
-    property email:
-        def __get__(GitSignature self):
-            cdef bytes py_string = self._signature.email
-            return py_string.decode(self._encoding)
-
-    property time:
-        def __get__(GitSignature self):
-            cdef git_time_t time = self._signature.when.time
-            return time
-
-    property offset:
-        def __get__(GitSignature self):
-            cdef int time = self._signature.when.offset
-            return time
-
-
-cdef GitSignature _make_signature(const_git_signature *_signature, object owner):
-    if _signature is NULL:
-        return None
-    # FIXME: Inefficient
-    cdef GitSignature signature = GitSignature()
-    # git_signature_free(signature._signature)
-    signature._signature = NULL
-    signature._owner = owner
-    signature._signature = <git_signature*>_signature
-    return signature
+include "_cygit2_types.pxi"
+include "_gitodb.pxi"
+include "_gitsignature.pxi"
 
 
 cdef _GitObject_from_git_object_pointer(Repository repo, git_object *_object):
@@ -866,12 +572,12 @@ cdef class Config:
         if isinstance(value, bool):
             c_bool = value
             error = git_config_set_bool(config, bname, c_bool)
+            check_error(error)
 
         elif isinstance(value, int):
             c_int = value
             error = git_config_set_int64(config, bname, c_int)
-            if error != GIT_OK:
-                raise ValueError()
+            check_error(error)
 
         elif isinstance(value, unicode) or isinstance(value, bytes):
             if isinstance(value, unicode):
@@ -881,8 +587,10 @@ cdef class Config:
             c_string = py_string
 
             error = git_config_set_string(config, bname, c_string)
+            check_error(error)
 
-        check_error(error)
+        else:
+            raise ValueError('Unhandled type for value {!r}'.format(value))
 
     cdef delete_entry(Config self, name):
         cdef int error
