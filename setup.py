@@ -58,6 +58,10 @@ ext_modules = [
             'src/_cygit2_types.pxi',
             'src/_gitodb.pxi',
             'src/_gitsignature.pxi',
+            'src/_gitobject.pxi',
+            'src/_gitcommit.pxi',
+            'src/_gitblob.pxi',
+            'src/_gittree.pxi',
 
             # Definitions
             'src/_attr.pxd',

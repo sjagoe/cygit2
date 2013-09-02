@@ -70,12 +70,7 @@ from _odb cimport (
 
 from _revparse cimport git_revparse_single
 
-from _commit cimport \
-    git_commit_free, git_commit_lookup_prefix, git_commit_id, \
-    git_commit_message_encoding, git_commit_message, git_commit_time, \
-    git_commit_time_offset, git_commit_committer, git_commit_author, \
-    git_commit_tree, git_commit_tree_id, git_commit_parentcount, \
-    git_commit_parent, git_commit_parent_id, git_commit_nth_gen_ancestor
+from _commit cimport git_commit_lookup_prefix
 
 from _config cimport (
     git_config_new, git_config_free, git_config_open_ondisk,
@@ -102,21 +97,12 @@ from _reflog cimport \
     git_reflog_entry_byindex, git_reflog_entry_id_new, \
     git_reflog_entry_id_old, git_reflog_entry_message
 
-from _tree cimport \
-    git_tree_free, git_tree_lookup_prefix, git_tree_id, \
-    git_tree_entry_bypath, git_tree_entry_byindex, git_tree_entrycount, \
-    git_tree_entry_id, git_tree_entry_dup, git_tree_entry_free, \
-    git_tree_entry_name, git_tree_entry_byname, git_tree_entry_filemode, \
-    git_tree_entry_to_object
+from _tree cimport git_tree_lookup_prefix
 
 from _blob cimport (
     git_blob_create_frombuffer,
     git_blob_create_fromdisk,
     git_blob_create_fromworkdir,
-    git_blob_free,
-    git_blob_id,
-    git_blob_rawcontent,
-    git_blob_rawsize,
 )
 
 from _status cimport \
@@ -147,10 +133,7 @@ from _status cimport \
 
 from _clone cimport git_clone
 
-from _object cimport \
-    git_object_lookup_prefix, \
-    git_object_free, \
-    git_object_type
+from _object cimport git_object_lookup_prefix
 
 
 include "_encoding.pxi"
@@ -159,218 +142,10 @@ include "_enum.pxi"
 include "_cygit2_types.pxi"
 include "_gitodb.pxi"
 include "_gitsignature.pxi"
-
-
-cdef _GitObject_from_git_object_pointer(Repository repo, git_object *_object):
-    cdef _GitObjectType ObjType = GitObjectType
-    if _object is NULL:
-        return None
-
-    cdef unsigned int t = <unsigned int>git_object_type(_object)
-    type_ = ObjType._from_uint(<unsigned int>t)
-    if type_ == ObjType.COMMIT:
-        commit = GitCommit(repo)
-        commit._object = _object
-        return commit
-    elif type_ == ObjType.TREE:
-        tree = GitTree(repo)
-        tree._object = _object
-        return tree
-    elif type_ == ObjType.BLOB:
-        blob = GitBlob(repo)
-        blob._object = _object
-        return blob
-    git_object_free(_object)
-    raise TypeError('Unsupported object type {!r}'.format(type_))
-
-
-cdef class GitObject:
-
-    cdef git_object *_object
-
-    cdef Repository _repository
-
-    def __cinit__(GitObject self):
-        self._object = NULL
-
-    def __init__(self, Repository repo):
-        self._repository = repo
-
-    property type:
-        def __get__(GitCommit self):
-            cdef _GitObjectType ObjType = GitObjectType
-            return ObjType._from_uint(git_object_type(self._object))
-
-    property hex:
-        def __get__(GitCommit self):
-            return self.oid.hex
-
-
-cdef class GitCommit(GitObject):
-
-    def __dealloc__(GitCommit self):
-        if self._object is not NULL:
-            git_commit_free(<git_commit*>self._object)
-
-    cdef object _get_message(GitCommit self):
-        cdef bytes py_string
-        cdef const_char *message = git_commit_message(<git_commit*>self._object)
-        if message is NULL:
-            return None
-        py_string = <char*>message
-        return py_string
-
-    def ancestor(GitCommit self, unsigned int generation):
-        cdef int error
-        cdef GitCommit parent = GitCommit()
-        error = git_commit_nth_gen_ancestor(<git_commit**>cython.address(parent._object),
-                                            <git_commit*>self._object, generation)
-        check_error(error)
-        return parent
-
-    def __richcmp__(GitCommit self, GitCommit other not None, int op):
-        if op == 2: # ==
-            return self.oid == other.oid
-        elif op == 3: # !=
-            return self.oid != other.oid
-        elif op == 0: # <
-            return self.oid < other.oid
-        elif op == 1: # <= (not >)
-            return not (self.oid > other.oid)
-        elif op == 4: # >
-            return self.oid > other.oid
-        elif op == 5: # >= (not <)
-            return not (self.oid < other.oid)
-
-    property oid:
-        def __get__(GitCommit self):
-            cdef const_git_oid *oidp
-            oidp = git_commit_id(<git_commit*>self._object)
-            return make_oid(self, oidp)
-
-    property message_encoding:
-        def __get__(GitCommit self):
-            cdef bytes py_string
-            cdef const_char *encoding = git_commit_message_encoding(<git_commit*>self._object)
-            if encoding is NULL:
-                return None
-            py_string = <char*>encoding
-            return py_string.decode('ascii') # Will it always be ascii?
-
-    property message:
-        def __get__(GitCommit self):
-            message = self._get_message()
-            if message is None:
-                return None
-            encoding = self.message_encoding
-            if encoding is None:
-                encoding = DEFAULT_ENCODING
-            return message.decode(encoding)
-
-    property _message:
-        def __get__(GitCommit self):
-            return self._get_message()
-
-    # FIXME: Convert time and time_offset into datetime
-    property commit_time:
-        def __get__(GitCommit self):
-            cdef git_time_t time = git_commit_time(<git_commit*>self._object)
-            cdef object py_time = time
-            return py_time
-
-    property time_offset:
-        def __get__(GitCommit self):
-            cdef int offset = git_commit_time_offset(<git_commit*>self._object)
-            return offset
-
-    property committer:
-        def __get__(GitCommit self):
-            cdef const_git_signature *sig = git_commit_committer(<git_commit*>self._object)
-            return _make_signature(sig, self)
-
-    property author:
-        def __get__(GitCommit self):
-            cdef const_git_signature *sig = git_commit_author(<git_commit*>self._object)
-            return _make_signature(sig, self)
-
-    property tree:
-        def __get__(GitCommit self):
-            cdef int error
-            cdef GitTree tree = GitTree(self._repository)
-            error = git_commit_tree(<git_tree**>cython.address(tree._object),
-                                    <git_commit*>self._object)
-            check_error(error)
-            return tree
-
-    property tree_id:
-        def __get__(GitCommit self):
-            cdef const_git_oid *oidp
-            oidp = git_commit_tree_id(<git_commit*>self._object)
-            return make_oid(self, oidp)
-
-    property parents:
-        def __get__(GitCommit self):
-            cdef int error
-            cdef int count
-            cdef int index
-            cdef GitCommit parent
-            count = git_commit_parentcount(<git_commit*>self._object)
-            if count == 0:
-                return []
-            parents = []
-            for index from 0 <= index < count:
-                parent = GitCommit(self._repository)
-                error = git_commit_parent(<git_commit**>cython.address(parent._object),
-                                          <git_commit*>self._object, index)
-                check_error(error)
-                parents.append(parent)
-            return parents
-
-    property parent_ids:
-        def __get__(GitCommit self):
-            cdef int error
-            cdef int count
-            cdef int index
-            cdef const_git_oid *oidp
-            cdef GitOid oid
-            count = git_commit_parentcount(<git_commit*>self._object)
-            if count == 0:
-                return []
-            parent_ids = []
-            for index from 0 <= index < count:
-                oidp = git_commit_parent_id(<git_commit*>self._object, index)
-                oid = make_oid(self, oidp)
-                if oid is not None:
-                    parent_ids.append(oid)
-            return parent_ids
-
-
-cdef class GitBlob(GitObject):
-
-    def __dealloc__(GitBlob self):
-        if self._object is not NULL:
-            git_blob_free(<git_blob*>self._object)
-
-    cpdef read_raw(GitBlob self):
-        cdef bytes py_content
-        cdef char *content = <char*>git_blob_rawcontent(<git_blob*>self._object)
-        py_content = content
-        return py_content
-
-    property oid:
-        def __get__(GitBlob self):
-            cdef const_git_oid *oidp
-            oidp = git_blob_id(<git_blob*>self._object)
-            return make_oid(self, oidp)
-
-    property data:
-        def __get__(GitBlob self):
-            return self.read_raw()
-
-    property size:
-        def __get__(GitBlob self):
-            cdef git_off_t size = git_blob_rawsize(<git_blob*>self._object)
-            return int(size)
+include "_gitobject.pxi"
+include "_gitcommit.pxi"
+include "_gitblob.pxi"
+include "_gittree.pxi"
 
 
 class GitItemNotFound(Exception): pass
@@ -890,132 +665,6 @@ cdef class Reference:
             cdef _GitReferenceType RefType = GitReferenceType
             cdef git_ref_t type_ = self._type()
             return RefType._from_git_ref_t(type_)
-
-
-cdef class GitTreeEntry:
-
-    cdef git_tree_entry *_entry
-
-    cdef Repository _repository
-
-    def __cinit__(GitTreeEntry self):
-        self._entry = NULL
-
-    def __init__(self, Repository repo):
-        self._repository = repo
-
-    def __dealloc__(GitTreeEntry self):
-        if self._entry is not NULL:
-            git_tree_entry_free(self._entry)
-
-    property name:
-        def __get__(GitTreeEntry self):
-            cdef const_char *path = git_tree_entry_name(self._entry)
-            cdef bytes py_path = path
-            return py_path.decode(DEFAULT_ENCODING)
-
-    property oid:
-        def __get__(GitTreeEntry self):
-            cdef const_git_oid *oidp
-            oidp = git_tree_entry_id(self._entry)
-            return make_oid(self, oidp)
-
-    property hex:
-        def __get__(self):
-            return self.oid.hex
-
-    property filemode:
-        def __get__(self):
-            return long(git_tree_entry_filemode(self._entry))
-
-    def to_object(self):
-        cdef int error
-        cdef git_object *_object
-        error = git_tree_entry_to_object(cython.address(_object),
-                                         self._repository._repository,
-                                         self._entry)
-        check_error(error)
-        return _GitObject_from_git_object_pointer(self._repository, _object)
-
-
-cdef class GitTree(GitObject):
-
-    def __dealloc__(GitTree self):
-        if self._object is not NULL:
-            git_tree_free(<git_tree*>self._object)
-
-    def __richcmp__(GitTree self, GitTree other not None, int op):
-        if op == 2: # ==
-            return self.oid == other.oid
-        elif op == 3: # !=
-            return self.oid != other.oid
-        elif op == 0: # <
-            return self.oid < other.oid
-        elif op == 1: # <= (not >)
-            return not (self.oid > other.oid)
-        elif op == 4: # >
-            return self.oid > other.oid
-        elif op == 5: # >= (not <)
-            return not (self.oid < other.oid)
-
-    property oid:
-        def __get__(GitTree self):
-            cdef const_git_oid *oidp
-            oidp = git_tree_id(<git_tree*>self._object)
-            return make_oid(self, oidp)
-
-    cdef size_t _len(GitTree self):
-        return git_tree_entrycount(<git_tree*>self._object)
-
-    def __len__(GitTree self):
-        len_ = self._len()
-        return len_
-
-    cdef _item_by_index(GitTree self, index):
-        cdef long index_ = index
-        cdef size_t len_ = self._len()
-        cdef long llen = <long>len_
-        if index_ >= llen:
-            raise IndexError(index)
-        elif index_ < -llen:
-            raise IndexError(index)
-        if index_ < 0:
-            index_ = len_ + index_
-
-        entry = GitTreeEntry(self._repository)
-        entry._entry = git_tree_entry_dup(
-            git_tree_entry_byindex(<git_tree*>self._object, index_))
-        return entry
-
-    cdef _item_by_path(GitTree self, path):
-        cdef int error
-        cdef bytes bpath = _to_bytes(path)
-
-        entry = GitTreeEntry(self._repository)
-        error = git_tree_entry_bypath(cython.address(entry._entry),
-                                      <git_tree*>self._object, bpath)
-        if error != GIT_OK:
-            raise KeyError(path)
-        return entry
-
-    def __getitem__(GitTree self, value):
-        if isinstance(value, int) or isinstance(value, long):
-            return self._item_by_index(value)
-        elif isinstance(value, bytes) or isinstance(value, unicode):
-            return self._item_by_path(value)
-        else:
-            raise TypeError('Unexpected {}'.format(type(value)))
-
-    def __contains__(GitTree self, filename):
-        """Returns True if the item specified by ``filename`` is in the tree.
-
-        """
-        cdef bytes bpath = _to_bytes(filename)
-        cdef const_git_tree_entry *entry = git_tree_entry_byname(
-            <git_tree*>self._object, bpath)
-        if entry is NULL:
-            return False
-        return True
 
 
 cdef _open_repository(git_repository **repo, path):
