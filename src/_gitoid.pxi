@@ -26,12 +26,14 @@
 # Boston, MA 02110-1301, USA.
 
 from _oid cimport (
-    git_oid_fmt,
-    git_oid_fromstrn,
-    git_oid_fromraw,
+    GIT_OID_HEXSZ,
     GIT_OID_MINPREFIXLEN,
     GIT_OID_RAWSZ,
-    GIT_OID_HEXSZ,
+    const_git_oid,
+    git_oid,
+    git_oid_fmt,
+    git_oid_fromraw,
+    git_oid_fromstrn,
 )
 
 
