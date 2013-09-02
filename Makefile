@@ -76,6 +76,7 @@ includes: \
 	src/_gitreference.pxi \
 	src/_gitrepository.pxi \
 	src/_gitsignature.pxi \
+	src/_gitstatus.pxi \
 	src/_gittree.pxi
 
 files: definitions includes src/_cygit2.pyx

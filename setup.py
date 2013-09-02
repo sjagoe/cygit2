@@ -66,6 +66,7 @@ ext_modules = [
             'src/_gitoid.pxi',
             'src/_gitreference.pxi',
             'src/_gitrepository.pxi',
+            'src/_gitstatus.pxi',
 
             # Definitions
             'src/_attr.pxd',
