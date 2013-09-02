@@ -126,13 +126,15 @@ from _tree cimport \
     git_tree_entry_name, git_tree_entry_byname, git_tree_entry_filemode, \
     git_tree_entry_to_object
 
-from _blob cimport \
-    git_blob_free, \
-    git_blob_id, \
-    git_blob_rawcontent, \
-    git_blob_rawsize, \
-    git_blob_create_frombuffer, \
-    git_blob_create_fromworkdir
+from _blob cimport (
+    git_blob_create_frombuffer,
+    git_blob_create_fromdisk,
+    git_blob_create_fromworkdir,
+    git_blob_free,
+    git_blob_id,
+    git_blob_rawcontent,
+    git_blob_rawsize,
+)
 
 from _status cimport \
     git_status_t, \
@@ -1529,6 +1531,22 @@ cdef class Repository:
         assert_Repository(self)
 
         error = git_blob_create_fromworkdir(
+            <git_oid*>oid._oid, self._repository, char_path)
+
+        check_error(error)
+        assert_GitOid(oid)
+
+        return oid
+
+    def create_blob_fromdisk(Repository self, path):
+        cdef int error
+        cdef GitOid oid = _empty_GitOid()
+        cdef bytes py_path = _to_bytes(path)
+        cdef const_char *char_path = py_path
+
+        assert_Repository(self)
+
+        error = git_blob_create_fromdisk(
             <git_oid*>oid._oid, self._repository, char_path)
 
         check_error(error)
