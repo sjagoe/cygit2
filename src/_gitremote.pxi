@@ -24,34 +24,48 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-import sys
 
-from libc cimport stdlib
-from libc.stdint cimport int64_t
+from _types cimport git_remote, git_repository
 
-import cython
-
-from libc.string cimport const_char, const_uchar
-
-from _types cimport (
-    git_off_t,
-    git_ref_t,
-    git_time_t,
+from _remote cimport (
+    git_remote_free,
+    git_remote_load,
+    git_remote_name,
+    git_remote_url,
 )
 
-include "_encoding.pxi"
-include "_error.pxi"
-include "_enum.pxi"
-include "_cygit2_types.pxi"
-include "_gitoid.pxi"
-include "_gitconfig.pxi"
-include "_gitstatus.pxi"
-include "_gitodb.pxi"
-include "_gitsignature.pxi"
-include "_gitobject.pxi"
-include "_gitcommit.pxi"
-include "_gitblob.pxi"
-include "_gittree.pxi"
-include "_gitreference.pxi"
-include "_gitremote.pxi"
-include "_gitrepository.pxi"
+
+cdef GitRemote _create_GitRemote(git_repository *repo, const char *name):
+    cdef int error
+    cdef GitRemote remote = GitRemote()
+    cdef git_remote *gitremote
+    error = git_remote_load(cython.address(gitremote), repo, name)
+    check_error(error)
+    remote._remote = gitremote
+    return remote
+
+
+cdef class GitRemote:
+
+    cdef git_remote *_remote
+
+    def __cinit__(GitRemote self):
+        self._remote = NULL
+
+    def __dealloc__(GitRemote self):
+        if self._remote is not NULL:
+            git_remote_free(self._remote)
+
+    property name:
+        def __get__(GitRemote self):
+            assert_GitRemote(self)
+            cdef const char *c_name = git_remote_name(self._remote)
+            cdef bytes py_name = c_name
+            return py_name.decode(DEFAULT_ENCODING)
+
+    property url:
+        def __get__(GitRemote self):
+            assert_GitRemote(self)
+            cdef const char *c_url = git_remote_url(self._remote)
+            cdef bytes py_url = c_url
+            return py_url.decode(DEFAULT_ENCODING)

@@ -116,6 +116,11 @@ cdef void assert_GitOid(GitOid oid):
         raise LibGit2Error('OID Uninitialized')
 
 
+cdef assert_GitRemote(GitRemote remote):
+    if remote._remote is NULL:
+        raise LibGit2Error('Remote Uninitialized')
+
+
 cdef void check_error(int error) except *:
     cdef const_git_error *err
     if error != GIT_OK:

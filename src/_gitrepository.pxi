@@ -49,6 +49,8 @@ from _refs cimport (
     git_reference_is_valid_name,
 )
 
+from _remote cimport git_remote_list
+
 from _repository cimport (
     git_repository_config,
     git_repository_discover,
@@ -459,3 +461,22 @@ cdef class Repository:
                 return None
             cdef bytes py_string = git_repository_workdir(self._repository)
             return py_string.decode(DEFAULT_ENCODING)
+
+    property remotes:
+        def __get__(Repository self):
+            assert_Repository(self)
+            cdef int error
+            cdef git_strarray remote_names
+            error = git_remote_list(
+                cython.address(remote_names), self._repository)
+            check_error(error)
+            try:
+                items = []
+                for index from 0 <= index < remote_names.count:
+                    remote = _create_GitRemote(
+                        self._repository,
+                        remote_names.strings[index])
+                    items.append(remote)
+                return tuple(items)
+            finally:
+                git_strarray_free(cython.address(remote_names))
