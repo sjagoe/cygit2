@@ -40,8 +40,8 @@ REMOTE_REPO_OBJECTS = 30
 REMOTE_REPO_BYTES = 2758
 
 
-@unittest.skip('Not Implemented')
 class RepositoryTest(utils.RepoTestCase):
+    @unittest.skip('Not Implemented')
     def test_remote_create(self):
         name = 'upstream'
         url = 'git://github.com/libgit2/pygit2.git'
@@ -55,6 +55,7 @@ class RepositoryTest(utils.RepoTestCase):
         self.assertRaises(ValueError, self.repo.create_remote, *(name, url))
 
 
+    @unittest.skip('Not Implemented')
     def test_remote_rename(self):
         remote = self.repo.remotes[0]
 
@@ -65,6 +66,7 @@ class RepositoryTest(utils.RepoTestCase):
         self.assertRaisesAssign(ValueError, remote, 'name', '')
 
 
+    @unittest.skip('Not Implemented')
     def test_remote_set_url(self):
         remote = self.repo.remotes[0]
 
@@ -76,6 +78,7 @@ class RepositoryTest(utils.RepoTestCase):
         self.assertRaisesAssign(ValueError, remote, 'url', '')
 
 
+    @unittest.skip('Not Implemented')
     def test_refspec(self):
         remote = self.repo.remotes[0]
 
@@ -103,6 +106,7 @@ class RepositoryTest(utils.RepoTestCase):
         self.assertTrue(remote.name in [x.name for x in self.repo.remotes])
 
 
+    @unittest.skip('Not Implemented')
     def test_remote_save(self):
         remote = self.repo.remotes[0]
 

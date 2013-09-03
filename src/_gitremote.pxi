@@ -28,6 +28,7 @@
 from _types cimport git_remote, git_repository
 
 from _remote cimport (
+    git_remote_create,
     git_remote_free,
     git_remote_load,
     git_remote_name,
@@ -35,12 +36,23 @@ from _remote cimport (
 )
 
 
-cdef GitRemote _create_GitRemote(git_repository *repo, const char *name):
+cdef GitRemote _load_GitRemote(git_repository *repo, const char *name):
     cdef int error
-    cdef GitRemote remote = GitRemote()
     cdef git_remote *gitremote
     error = git_remote_load(cython.address(gitremote), repo, name)
     check_error(error)
+    cdef GitRemote remote = GitRemote()
+    remote._remote = gitremote
+    return remote
+
+
+cdef GitRemote _create_GitRemote(git_repository *repo, const char * name,
+                                 const char *url):
+    cdef int error
+    cdef git_remote *gitremote
+    error = git_remote_create(cython.address(gitremote), repo, name, url)
+    check_error(error)
+    cdef GitRemote remote = GitRemote()
     remote._remote = gitremote
     return remote
 
