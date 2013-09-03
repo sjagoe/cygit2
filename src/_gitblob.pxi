@@ -24,33 +24,39 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-import sys
 
-from libc cimport stdlib
-from libc.stdint cimport int64_t
-
-import cython
-
-from libc.string cimport const_char, const_uchar
-
-from _types cimport (
-    git_off_t,
-    git_ref_t,
-    git_time_t,
+from _types cimport git_blob
+from _blob cimport (
+    git_blob_free,
+    git_blob_id,
+    git_blob_rawcontent,
+    git_blob_rawsize,
 )
 
-include "_encoding.pxi"
-include "_error.pxi"
-include "_enum.pxi"
-include "_cygit2_types.pxi"
-include "_gitoid.pxi"
-include "_gitconfig.pxi"
-include "_gitstatus.pxi"
-include "_gitodb.pxi"
-include "_gitsignature.pxi"
-include "_gitobject.pxi"
-include "_gitcommit.pxi"
-include "_gitblob.pxi"
-include "_gittree.pxi"
-include "_gitreference.pxi"
-include "_gitrepository.pxi"
+
+cdef class GitBlob(GitObject):
+
+    def __dealloc__(GitBlob self):
+        if self._object is not NULL:
+            git_blob_free(<git_blob*>self._object)
+
+    cpdef read_raw(GitBlob self):
+        cdef bytes py_content
+        cdef char *content = <char*>git_blob_rawcontent(<git_blob*>self._object)
+        py_content = content
+        return py_content
+
+    property oid:
+        def __get__(GitBlob self):
+            cdef const_git_oid *oidp
+            oidp = git_blob_id(<git_blob*>self._object)
+            return make_oid(self, oidp)
+
+    property data:
+        def __get__(GitBlob self):
+            return self.read_raw()
+
+    property size:
+        def __get__(GitBlob self):
+            cdef git_off_t size = git_blob_rawsize(<git_blob*>self._object)
+            return int(size)
