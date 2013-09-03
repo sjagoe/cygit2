@@ -32,6 +32,7 @@ from _remote cimport (
     git_remote_free,
     git_remote_load,
     git_remote_name,
+    git_remote_rename,
     git_remote_url,
 )
 
@@ -74,6 +75,28 @@ cdef class GitRemote:
             cdef const char *c_name = git_remote_name(self._remote)
             cdef bytes py_name = c_name
             return py_name.decode(DEFAULT_ENCODING)
+
+        def __set__(GitRemote self, name):
+            assert_GitRemote(self)
+            cdef int error
+            cdef bytes py_name
+            cdef const char * c_name
+            if isinstance(name, unicode):
+                py_name = name.encode(DEFAULT_ENCODING)
+            elif isinstance(name, bytes):
+                py_name = name
+            else:
+                raise TypeError(
+                    'Expected \'name\' to be {} or {}, got {}'.format(
+                        unicode, bytes, type(name)))
+
+            c_name = py_name
+            error = git_remote_rename(self._remote, c_name, NULL, NULL)
+            try:
+                check_error(error)
+            except LibGit2ConfigError as e:
+                # FIXME: Should this be in the pygit2 compatibility layer?
+                raise ValueError(e)
 
     property url:
         def __get__(GitRemote self):

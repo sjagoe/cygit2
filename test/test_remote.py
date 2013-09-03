@@ -54,7 +54,6 @@ class RepositoryTest(utils.RepoTestCase):
         self.assertRaises(ValueError, self.repo.create_remote, *(name, url))
 
 
-    @unittest.skip('Not Implemented')
     def test_remote_rename(self):
         remote = self.repo.remotes[0]
 
