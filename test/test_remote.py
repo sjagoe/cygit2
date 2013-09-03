@@ -103,7 +103,6 @@ class RepositoryTest(utils.RepoTestCase):
         self.assertTrue(remote.name in [x.name for x in self.repo.remotes])
 
 
-    @unittest.skip('Not Implemented')
     def test_remote_save(self):
         remote = self.repo.remotes[0]
 

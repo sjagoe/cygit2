@@ -33,6 +33,7 @@ from _remote cimport (
     git_remote_load,
     git_remote_name,
     git_remote_rename,
+    git_remote_save,
     git_remote_set_url,
     git_remote_url,
 )
@@ -69,6 +70,12 @@ cdef class GitRemote:
     def __dealloc__(GitRemote self):
         if self._remote is not NULL:
             git_remote_free(self._remote)
+
+    def save(self):
+        assert_GitRemote(self)
+        cdef int error
+        error = git_remote_save(self._remote)
+        check_error(error)
 
     property name:
         def __get__(GitRemote self):
