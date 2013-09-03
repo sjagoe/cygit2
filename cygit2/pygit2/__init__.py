@@ -31,6 +31,7 @@ from cygit2._cygit2 import (
     GitObjectType,
     GitOid as Oid,
     GitReferenceType,
+    GitRemote as Remote,
     GitSignature as Signature,
     Reference,
 )

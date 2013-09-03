@@ -31,6 +31,7 @@ from cygit2._cygit2 import (
     Repository as BaseRepository,
 )
 from cygit2._cygit2 import (
+    LibGit2ConfigError,
     LibGit2Error,
     LibGit2OSError,
 )
@@ -96,3 +97,9 @@ class Repository(BaseRepository):
             return super(Repository, self).create_blob_fromworkdir(path)
         except LibGit2OSError:
             raise KeyError(path)
+
+    def create_remote(self, name, url):
+        try:
+            return super(Repository, self).create_remote(name, url)
+        except LibGit2ConfigError as e:
+            raise ValueError(e)

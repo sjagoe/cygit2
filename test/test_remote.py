@@ -41,7 +41,6 @@ REMOTE_REPO_BYTES = 2758
 
 
 class RepositoryTest(utils.RepoTestCase):
-    @unittest.skip('Not Implemented')
     def test_remote_create(self):
         name = 'upstream'
         url = 'git://github.com/libgit2/pygit2.git'
