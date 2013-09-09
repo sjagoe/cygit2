@@ -25,18 +25,22 @@
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-from _types cimport git_remote, git_repository
+from _types cimport git_refspec, git_remote, git_repository
 
 from _remote cimport (
     git_remote_create,
     git_remote_free,
+    git_remote_get_refspec,
     git_remote_load,
     git_remote_name,
+    git_remote_refspec_count,
     git_remote_rename,
     git_remote_save,
     git_remote_set_url,
     git_remote_url,
 )
+
+from _refspec cimport git_refspec_dst, git_refspec_src
 
 
 cdef GitRemote _load_GitRemote(git_repository *repo, const char *name):
@@ -71,6 +75,22 @@ cdef class GitRemote:
         if self._remote is not NULL:
             git_remote_free(self._remote)
 
+    def get_refspec(GitRemote self, number):
+        assert_GitRemote(self)
+        cdef const git_refspec *refspec
+        cdef size_t c_number = number
+        cdef const char *c_source
+        cdef const char *c_dest
+        cdef bytes source
+        cdef bytes dest
+        refspec = git_remote_get_refspec(self._remote, c_number)
+        c_source = git_refspec_src(refspec)
+        c_dest = git_refspec_dst(refspec)
+        source = c_source
+        dest = c_dest
+        return (source.decode(DEFAULT_ENCODING),
+                dest.decode(DEFAULT_ENCODING))
+
     def save(self):
         assert_GitRemote(self)
         cdef int error
@@ -101,6 +121,12 @@ cdef class GitRemote:
             c_name = py_name
             error = git_remote_rename(self._remote, c_name, NULL, NULL)
             check_error(error)
+
+    property refspec_count:
+        def __get__(GitRemote self):
+            assert_GitRemote(self)
+            cdef size_t count = git_remote_refspec_count(self._remote)
+            return count
 
     property url:
         def __get__(GitRemote self):

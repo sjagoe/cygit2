@@ -75,7 +75,6 @@ class RepositoryTest(utils.RepoTestCase):
         self.assertRaisesAssign(ValueError, remote, 'url', '')
 
 
-    @unittest.skip('Not Implemented')
     def test_refspec(self):
         remote = self.repo.remotes[0]
 

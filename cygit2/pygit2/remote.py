@@ -48,6 +48,10 @@ class Remote(object):
             raise ValueError(e)
 
     @property
+    def refspec_count(self):
+        return self._remote.refspec_count
+
+    @property
     def url(self):
         return self._remote.url
 
@@ -58,6 +62,9 @@ class Remote(object):
         except LibGit2ConfigError as e:
             # FIXME: Should this be in the pygit2 compatibility layer?
             raise ValueError(e)
+
+    def get_refspec(self, number):
+        return self._remote.get_refspec(number)
 
     def save(self):
         self._remote.save()
