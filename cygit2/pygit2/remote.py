@@ -24,47 +24,40 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-
 from cygit2._cygit2 import (
-    Config,
-    GitCommit as Commit,
-    GitObjectType,
-    GitOid as Oid,
-    GitReferenceType,
-    GitSignature as Signature,
-    Reference,
-)
-from cygit2._cygit2 import LibGit2Error
-
-from .blob import Blob
-from .remote import Remote
-from .repository import (
-    Repository,
-    clone_repository,
-    discover_repository,
-    hash,
-    hashfile,
-    init_repository,
+    LibGit2ConfigError,
+    GitRemote,
 )
 
-GIT_DIFF_INCLUDE_UNMODIFIED = None
-GIT_DIFF_IGNORE_WHITESPACE = None
-GIT_DIFF_IGNORE_WHITESPACE_EOL = None
-GIT_REF_OID = GitReferenceType.OID
-GIT_REF_SYMBOLIC = GitReferenceType.SYMBOLIC
-GIT_OBJ_ANY = GitObjectType.ANY
-GIT_OBJ_BLOB = GitObjectType.BLOB
-GIT_OBJ_COMMIT = GitObjectType.COMMIT
-GIT_SORT_TIME = None
-GIT_SORT_REVERSE = None
 
-GIT_STATUS_CURRENT = 0
-GIT_STATUS_INDEX_DELETED = 0
-GIT_STATUS_INDEX_MODIFIED = 0
-GIT_STATUS_INDEX_NEW = 0
-GIT_STATUS_WT_DELETED = 0
-GIT_STATUS_WT_MODIFIED = 0
-GIT_STATUS_WT_NEW = 0
+class Remote(object):
 
+    def __init__(self, remote):
+        self._remote = remote
 
-GitError = LibGit2Error
+    @property
+    def name(self):
+        return self._remote.name
+
+    @name.setter
+    def name(self, value):
+        try:
+            self._remote.name = value
+        except LibGit2ConfigError as e:
+            # FIXME: Should this be in the pygit2 compatibility layer?
+            raise ValueError(e)
+
+    @property
+    def url(self):
+        return self._remote.url
+
+    @url.setter
+    def url(self, value):
+        try:
+            self._remote.url = value
+        except LibGit2ConfigError as e:
+            # FIXME: Should this be in the pygit2 compatibility layer?
+            raise ValueError(e)
+
+    def save(self):
+        self._remote.save()

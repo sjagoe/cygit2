@@ -100,11 +100,7 @@ cdef class GitRemote:
 
             c_name = py_name
             error = git_remote_rename(self._remote, c_name, NULL, NULL)
-            try:
-                check_error(error)
-            except LibGit2ConfigError as e:
-                # FIXME: Should this be in the pygit2 compatibility layer?
-                raise ValueError(e)
+            check_error(error)
 
     property url:
         def __get__(GitRemote self):
@@ -129,8 +125,4 @@ cdef class GitRemote:
 
             c_url = py_url
             error = git_remote_set_url(self._remote, c_url)
-            try:
-                check_error(error)
-            except LibGit2ConfigError as e:
-                # FIXME: Should this be in the pygit2 compatibility layer?
-                raise ValueError(e)
+            check_error(error)
