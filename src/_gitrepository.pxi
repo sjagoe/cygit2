@@ -58,6 +58,7 @@ from _repository cimport (
     git_repository_head,
     git_repository_head_detached,
     git_repository_head_orphan,
+    git_repository_index,
     git_repository_init,
     git_repository_is_bare,
     git_repository_is_empty,
@@ -433,15 +434,16 @@ cdef class Repository:
 
     ### Properties ###
 
-    property is_bare:
+    property config:
         def __get__(Repository self):
+            cdef int error
             assert_Repository(self)
-            return git_repository_is_bare(self._repository) != 0
-
-    property is_empty:
-        def __get__(Repository self):
-            assert_Repository(self)
-            return git_repository_is_empty(self._repository) != 0
+            cdef Config conf = Config()
+            git_config_free(conf._config) # FIXME
+            error = git_repository_config(cython.address(conf._config),
+                                          self._repository)
+            check_error(error)
+            return conf
 
     property head:
         def __get__(Repository self):
@@ -467,29 +469,30 @@ cdef class Repository:
             assert_Repository(self)
             return git_repository_head_orphan(self._repository) != 0
 
-    property config:
+    property index:
         def __get__(Repository self):
-            cdef int error
             assert_Repository(self)
-            cdef Config conf = Config()
-            git_config_free(conf._config) # FIXME
-            error = git_repository_config(cython.address(conf._config),
-                                          self._repository)
+            cdef int error
+            cdef GitIndex index = GitIndex.__new__(GitIndex)
+            error = git_repository_index(
+                cython.address(index._index), self._repository)
             check_error(error)
-            return conf
+            return index
+
+    property is_bare:
+        def __get__(Repository self):
+            assert_Repository(self)
+            return git_repository_is_bare(self._repository) != 0
+
+    property is_empty:
+        def __get__(Repository self):
+            assert_Repository(self)
+            return git_repository_is_empty(self._repository) != 0
 
     property path:
         def __get__(Repository self):
             assert_Repository(self)
             cdef bytes py_string = git_repository_path(self._repository)
-            return py_string.decode(DEFAULT_ENCODING)
-
-    property workdir:
-        def __get__(Repository self):
-            assert_Repository(self)
-            if self.is_bare:
-                return None
-            cdef bytes py_string = git_repository_workdir(self._repository)
             return py_string.decode(DEFAULT_ENCODING)
 
     property remotes:
@@ -510,3 +513,11 @@ cdef class Repository:
                 return tuple(items)
             finally:
                 git_strarray_free(cython.address(remote_names))
+
+    property workdir:
+        def __get__(Repository self):
+            assert_Repository(self)
+            if self.is_bare:
+                return None
+            cdef bytes py_string = git_repository_workdir(self._repository)
+            return py_string.decode(DEFAULT_ENCODING)
