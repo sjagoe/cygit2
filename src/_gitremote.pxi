@@ -79,17 +79,10 @@ cdef class GitRemote:
         assert_GitRemote(self)
         cdef const git_refspec *refspec
         cdef size_t c_number = number
-        cdef const char *c_source
-        cdef const char *c_dest
-        cdef bytes source
-        cdef bytes dest
-        refspec = git_remote_get_refspec(self._remote, c_number)
-        c_source = git_refspec_src(refspec)
-        c_dest = git_refspec_dst(refspec)
-        source = c_source
-        dest = c_dest
-        return (source.decode(DEFAULT_ENCODING),
-                dest.decode(DEFAULT_ENCODING))
+        cdef GitRefspec gitrefspec = GitRefspec.__new__(GitRefspec)
+        gitrefspec._owner = self
+        gitrefspec._refspec = git_remote_get_refspec(self._remote, c_number)
+        return gitrefspec
 
     def save(self):
         assert_GitRemote(self)

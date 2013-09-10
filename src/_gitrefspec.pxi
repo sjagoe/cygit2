@@ -24,35 +24,38 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-import sys
+from _types cimport git_refspec, git_remote, git_repository
 
-from libc cimport stdlib
-from libc.stdint cimport int64_t
+from _refspec cimport git_refspec_dst, git_refspec_src
 
-import cython
 
-from libc.string cimport const_char, const_uchar
+cdef class GitRefspec:
 
-from _types cimport (
-    git_off_t,
-    git_ref_t,
-    git_time_t,
-)
+    cdef const git_refspec * _refspec
 
-include "_encoding.pxi"
-include "_error.pxi"
-include "_enum.pxi"
-include "_cygit2_types.pxi"
-include "_gitoid.pxi"
-include "_gitconfig.pxi"
-include "_gitstatus.pxi"
-include "_gitodb.pxi"
-include "_gitsignature.pxi"
-include "_gitobject.pxi"
-include "_gitcommit.pxi"
-include "_gitblob.pxi"
-include "_gittree.pxi"
-include "_gitreference.pxi"
-include "_gitrefspec.pxi"
-include "_gitremote.pxi"
-include "_gitrepository.pxi"
+    # Keep a reference to the cygit2 object that owns the refspec object
+    cdef object _owner
+
+    def __cinit__(self):
+        self._refspec = NULL
+        self._owner = None
+
+    def __dealloc__(self):
+        self._owner = None
+        self._refspec = NULL
+
+    property source:
+        def __get__(self):
+            cdef const char *c_source
+            cdef bytes source
+            c_source = git_refspec_src(self._refspec)
+            source = c_source
+            return source.decode(DEFAULT_ENCODING)
+
+    property dest:
+        def __get__(self):
+            cdef const char *c_dest
+            cdef bytes dest
+            c_dest = git_refspec_dst(self._refspec)
+            dest = c_dest
+            return dest.decode(DEFAULT_ENCODING)

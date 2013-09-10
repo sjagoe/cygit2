@@ -44,7 +44,6 @@ class Remote(object):
         try:
             self._remote.name = value
         except LibGit2ConfigError as e:
-            # FIXME: Should this be in the pygit2 compatibility layer?
             raise ValueError(e)
 
     @property
@@ -60,11 +59,11 @@ class Remote(object):
         try:
             self._remote.url = value
         except LibGit2ConfigError as e:
-            # FIXME: Should this be in the pygit2 compatibility layer?
             raise ValueError(e)
 
     def get_refspec(self, number):
-        return self._remote.get_refspec(number)
+        refspec = self._remote.get_refspec(number)
+        return (refspec.source, refspec.dest)
 
     def save(self):
         self._remote.save()
