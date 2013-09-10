@@ -49,7 +49,6 @@ class IndexTest(utils.RepoTestCase):
     def test_index(self):
         self.assertNotEqual(None, self.repo.index)
 
-    @unittest.skip('Not Implemented')
     def test_read(self):
         index = self.repo.index
         self.assertEqual(len(index), 2)
