@@ -63,6 +63,8 @@ ext_modules = [
             'src/_gitodb.pxi',
             'src/_gitoid.pxi',
             'src/_gitreference.pxi',
+            'src/_gitrefspec.pxi',
+            'src/_gitremote.pxi',
             'src/_gitrepository.pxi',
             'src/_gitsignature.pxi',
             'src/_gitstatus.pxi',

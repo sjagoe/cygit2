@@ -31,11 +31,13 @@ from cygit2._cygit2 import (
     Repository as BaseRepository,
 )
 from cygit2._cygit2 import (
+    LibGit2ConfigError,
     LibGit2Error,
     LibGit2OSError,
 )
 
 from .object import Object
+from .remote import Remote
 
 
 logger = logging.getLogger(__name__)
@@ -65,6 +67,10 @@ def hashfile(filepath):
 
 
 class Repository(BaseRepository):
+
+    @property
+    def remotes(self):
+        return [Remote(remote) for remote in super(Repository, self).remotes]
 
     def __getitem__(self, oid):
         if not isinstance(oid, GitOid):
@@ -96,3 +102,9 @@ class Repository(BaseRepository):
             return super(Repository, self).create_blob_fromworkdir(path)
         except LibGit2OSError:
             raise KeyError(path)
+
+    def create_remote(self, name, url):
+        try:
+            return Remote(super(Repository, self).create_remote(name, url))
+        except LibGit2ConfigError as e:
+            raise ValueError(e)

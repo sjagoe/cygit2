@@ -49,6 +49,8 @@ from _refs cimport (
     git_reference_is_valid_name,
 )
 
+from _remote cimport git_remote_list
+
 from _repository cimport (
     git_repository_config,
     git_repository_discover,
@@ -380,6 +382,35 @@ cdef class Repository:
 
         return oid
 
+    def create_remote(Repository self, name, url):
+        cdef bytes py_name
+        cdef char *c_name
+        cdef bytes py_url
+        cdef char *c_url
+
+        assert_Repository(self)
+
+        if isinstance(name, unicode):
+            py_name = name.encode(DEFAULT_ENCODING)
+        elif isinstance(name, bytes):
+            py_name = name
+        else:
+            raise TypeError('Expected \'name\' to be {} or {}, got {}'.format(
+                unicode, bytes, type(name)))
+
+        if isinstance(url, unicode):
+            py_url = url.encode(DEFAULT_ENCODING)
+        elif isinstance(url, bytes):
+            py_url = url
+        else:
+            raise TypeError('Expected \'url\' to be {} or {}, got {}'.format(
+                unicode, bytes, type(url)))
+
+        c_name = py_name
+        c_url = py_url
+
+        return _create_GitRemote(self._repository, c_name, c_url)
+
     ### Special methods ###
 
     def __contains__(Repository self, GitOid oid):
@@ -459,3 +490,22 @@ cdef class Repository:
                 return None
             cdef bytes py_string = git_repository_workdir(self._repository)
             return py_string.decode(DEFAULT_ENCODING)
+
+    property remotes:
+        def __get__(Repository self):
+            assert_Repository(self)
+            cdef int error
+            cdef git_strarray remote_names
+            error = git_remote_list(
+                cython.address(remote_names), self._repository)
+            check_error(error)
+            try:
+                items = []
+                for index from 0 <= index < remote_names.count:
+                    remote = _load_GitRemote(
+                        self._repository,
+                        remote_names.strings[index])
+                    items.append(remote)
+                return tuple(items)
+            finally:
+                git_strarray_free(cython.address(remote_names))

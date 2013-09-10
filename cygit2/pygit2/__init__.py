@@ -37,6 +37,7 @@ from cygit2._cygit2 import (
 from cygit2._cygit2 import LibGit2Error
 
 from .blob import Blob
+from .remote import Remote
 from .repository import (
     Repository,
     clone_repository,
