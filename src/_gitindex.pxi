@@ -24,36 +24,27 @@
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
-import sys
 
-from libc cimport stdlib
-from libc.stdint cimport int64_t
+from _types cimport git_index
 
-import cython
-
-from libc.string cimport const_char, const_uchar
-
-from _types cimport (
-    git_off_t,
-    git_ref_t,
-    git_time_t,
+from _index cimport (
+    git_index_entrycount,
+    git_index_free,
 )
 
-include "_encoding.pxi"
-include "_error.pxi"
-include "_enum.pxi"
-include "_cygit2_types.pxi"
-include "_gitoid.pxi"
-include "_gitconfig.pxi"
-include "_gitstatus.pxi"
-include "_gitodb.pxi"
-include "_gitsignature.pxi"
-include "_gitobject.pxi"
-include "_gitcommit.pxi"
-include "_gitblob.pxi"
-include "_gittree.pxi"
-include "_gitreference.pxi"
-include "_gitrefspec.pxi"
-include "_gitremote.pxi"
-include "_gitindex.pxi"
-include "_gitrepository.pxi"
+
+cdef class GitIndex:
+
+    cdef git_index *_index
+
+    def __cinit__(self):
+        self._index = NULL
+
+    def __dealloc__(self):
+        if self._index is not NULL:
+            git_index_free(self._index)
+            self._index = NULL
+
+    def __len__(self):
+        cdef size_t count = git_index_entrycount(self._index)
+        return count

@@ -58,6 +58,7 @@ from _repository cimport (
     git_repository_head,
     git_repository_head_detached,
     git_repository_head_orphan,
+    git_repository_index,
     git_repository_init,
     git_repository_is_bare,
     git_repository_is_empty,
@@ -466,6 +467,16 @@ cdef class Repository:
         def __get__(Repository self):
             assert_Repository(self)
             return git_repository_head_orphan(self._repository) != 0
+
+    property index:
+        def __get__(Repository self):
+            assert_Repository(self)
+            cdef int error
+            cdef GitIndex index = GitIndex.__new__(GitIndex)
+            error = git_repository_index(
+                cython.address(index._index), self._repository)
+            check_error(error)
+            return index
 
     property is_bare:
         def __get__(Repository self):

@@ -44,12 +44,12 @@ class IndexBareTest(utils.BareRepoTestCase):
         self.assertEqual(len(index), 0)
 
 
-@unittest.skip('Not Implemented')
 class IndexTest(utils.RepoTestCase):
 
     def test_index(self):
         self.assertNotEqual(None, self.repo.index)
 
+    @unittest.skip('Not Implemented')
     def test_read(self):
         index = self.repo.index
         self.assertEqual(len(index), 2)
@@ -64,6 +64,7 @@ class IndexTest(utils.RepoTestCase):
         self.assertEqual(index['hello.txt'].path, 'hello.txt')
         self.assertEqual(index[1].hex, sha)
 
+    @unittest.skip('Not Implemented')
     def test_add(self):
         index = self.repo.index
 
@@ -74,12 +75,14 @@ class IndexTest(utils.RepoTestCase):
         self.assertEqual(len(index), 3)
         self.assertEqual(index['bye.txt'].hex, sha)
 
+    @unittest.skip('Not Implemented')
     def test_clear(self):
         index = self.repo.index
         self.assertEqual(len(index), 2)
         index.clear()
         self.assertEqual(len(index), 0)
 
+    @unittest.skip('Not Implemented')
     def test_write(self):
         index = self.repo.index
         index.add('bye.txt')
@@ -91,6 +94,7 @@ class IndexTest(utils.RepoTestCase):
         self.assertTrue('bye.txt' in index)
 
 
+    @unittest.skip('Not Implemented')
     def test_read_tree(self):
         tree_oid = '68aba62e560c0ebc3396e8ae9335232cd93a3f60'
         # Test reading first tree
@@ -106,10 +110,12 @@ class IndexTest(utils.RepoTestCase):
         self.assertEqual(len(index), 2)
 
 
+    @unittest.skip('Not Implemented')
     def test_write_tree(self):
         oid = self.repo.index.write_tree()
         self.assertEqual(oid.hex, 'fd937514cb799514d4b81bb24c5fcfeb6472b245')
 
+    @unittest.skip('Not Implemented')
     def test_iter(self):
         index = self.repo.index
         n = len(index)
@@ -119,6 +125,7 @@ class IndexTest(utils.RepoTestCase):
         entries = [index[x].hex for x in range(n)]
         self.assertEqual(list(x.hex for x in index), entries)
 
+    @unittest.skip('Not Implemented')
     def test_mode(self):
         """
             Testing that we can access an index entry mode.
@@ -128,6 +135,7 @@ class IndexTest(utils.RepoTestCase):
         hello_mode = index['hello.txt'].mode
         self.assertEqual(hello_mode, 33188)
 
+    @unittest.skip('Not Implemented')
     def test_bare_index(self):
         index = pygit2.Index(os.path.join(self.repo.path, 'index'))
         self.assertEqual([x.hex for x in index],
@@ -135,6 +143,7 @@ class IndexTest(utils.RepoTestCase):
 
         self.assertRaises(pygit2.GitError, lambda: index.add('bye.txt'))
 
+    @unittest.skip('Not Implemented')
     def test_remove(self):
         index = self.repo.index
         self.assertTrue('hello.txt' in index)
