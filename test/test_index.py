@@ -114,7 +114,6 @@ class IndexTest(utils.RepoTestCase):
         oid = self.repo.index.write_tree()
         self.assertEqual(oid.hex, 'fd937514cb799514d4b81bb24c5fcfeb6472b245')
 
-    @unittest.skip('Not Implemented')
     def test_iter(self):
         index = self.repo.index
         n = len(index)
@@ -124,7 +123,6 @@ class IndexTest(utils.RepoTestCase):
         entries = [index[x].hex for x in range(n)]
         self.assertEqual(list(x.hex for x in index), entries)
 
-    @unittest.skip('Not Implemented')
     def test_mode(self):
         """
             Testing that we can access an index entry mode.

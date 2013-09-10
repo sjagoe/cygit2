@@ -39,38 +39,85 @@ from _index cimport (
 )
 
 
+@cython.internal
 cdef class GitIndexEntry:
 
     cdef const git_index_entry *_entry
 
     cdef object _owner
 
-    def __cinit__(self):
+    def __cinit__(GitIndexEntry self):
         self._entry = NULL
         self._owner = None
 
-    def __dealloc__(self):
+    def __dealloc__(GitIndexEntry self):
         self._owner = None
         self._entry = NULL
+
+    property oid:
+        def __get__(GitIndexEntry self):
+            cdef const_git_oid *oidp = cython.address(self._entry.oid)
+            return make_oid(self, oidp)
+
+    property hex:
+        def __get__(GitIndexEntry self):
+            return self.oid.hex
+
+    property path:
+        def __get__(GitIndexEntry self):
+            cdef bytes path = self._entry.path
+            return path.decode(DEFAULT_ENCODING)
+
+    property mode:
+        def __get__(GitIndexEntry self):
+            return self._entry.mode
+
+
+@cython.internal
+cdef class GitIndexIter:
+
+    cdef GitIndex _owner
+
+    cdef long _index
+
+    def __cinit__(GitIndexIter self):
+        self._index = 0
+        self._owner = None
+
+    def __dealloc__(GitIndexIter self):
+        self._owner = None
+        self._index = 0
+
+    def __next__(GitIndexIter self):
+        cdef const git_index_entry *index_entry = NULL
+        index_entry = git_index_get_byindex(self._owner._index, self._index)
+        if index_entry is NULL:
+            raise StopIteration()
+        self._index += 1
+
+        cdef GitIndexEntry entry = GitIndexEntry.__new__(GitIndexEntry)
+        entry._entry = index_entry
+        entry._owner = self._owner
+        return entry
 
 
 cdef class GitIndex:
 
     cdef git_index *_index
 
-    def __cinit__(self):
+    def __cinit__(GitIndex self):
         self._index = NULL
 
-    def __dealloc__(self):
+    def __dealloc__(GitIndex self):
         if self._index is not NULL:
             git_index_free(self._index)
             self._index = NULL
 
-    def __len__(self):
+    def __len__(GitIndex self):
         cdef size_t count = git_index_entrycount(self._index)
         return count
 
-    def __getitem__(self, value):
+    def __getitem__(GitIndex self, value):
         cdef bytes bpath
         cdef char *c_path
         cdef long index
@@ -94,7 +141,7 @@ cdef class GitIndex:
         entry._owner = self
         return entry
 
-    def __contains__(self, value):
+    def __contains__(GitIndex self, value):
         cdef int error
         cdef bytes bpath
         cdef char *c_path
@@ -110,3 +157,8 @@ cdef class GitIndex:
             check_error(error)
             return True
         raise TypeError(value)
+
+    def __iter__(GitIndex self):
+        cdef GitIndexIter iter = GitIndexIter.__new__(GitIndexIter)
+        iter._owner = self
+        return iter
