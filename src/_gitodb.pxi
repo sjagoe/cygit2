@@ -141,8 +141,8 @@ cdef class GitOdb:
 
     cdef GitOdbObject read_prefix(GitOdb self, GitOid oid):
         cdef int error
-        cdef GitOdbObject obj = GitOdbObject()
         assert_GitOid(oid)
+        cdef GitOdbObject obj = GitOdbObject.__new__(GitOdbObject)
         error = git_odb_read_prefix(cython.address(obj._object), self._odb,
                                     oid._oid, oid.length)
         check_error(error)

@@ -44,8 +44,8 @@ cdef class GitSignature:
         self._signature = NULL
         self._owner = None
 
-    def __init__(GitSignature self, name=None, email=None, time=None,
-                 offset=None, encoding=None):
+    def __init__(GitSignature self, name, email, time=None, offset=None,
+                 encoding=None):
         cdef int error
         cdef bytes bytes_name
         cdef bytes bemail
@@ -53,10 +53,6 @@ cdef class GitSignature:
         cdef char *c_email = NULL
         cdef git_time_t c_time = -1
         cdef int c_offset = 0
-
-        if name is None or email is None:
-            self._encoding = DEFAULT_ENCODING
-            return # Fixme
 
         if encoding is not None:
             encoding = encoding[:len(encoding)]
@@ -116,10 +112,8 @@ cdef class GitSignature:
 cdef GitSignature _make_signature(const_git_signature *_signature, object owner):
     if _signature is NULL:
         return None
-    # FIXME: Inefficient
-    cdef GitSignature signature = GitSignature()
-    # git_signature_free(signature._signature)
-    signature._signature = NULL
+    cdef GitSignature signature = GitSignature.__new__(GitSignature)
     signature._owner = owner
     signature._signature = <git_signature*>_signature
+    signature._encoding = DEFAULT_ENCODING
     return signature

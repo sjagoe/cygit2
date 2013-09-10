@@ -106,7 +106,7 @@ cdef class Repository:
     cdef GitOdb odb(Repository self):
         cdef int error
         assert_Repository(self)
-        cdef GitOdb odb = GitOdb()
+        cdef GitOdb odb = GitOdb.__new__(GitOdb)
         error = git_repository_odb(cython.address(odb._odb), self._repository)
         check_error(error)
         return odb
@@ -145,15 +145,16 @@ cdef class Repository:
 
     @classmethod
     def open(cls, path):
-        repo = Repository()
+        cdef Repository repo = Repository.__new__(Repository)
         _open_repository(cython.address(repo._repository), path)
+        assert_Repository(repo)
         return repo
 
     @classmethod
     def init(cls, path, bare=False):
         cdef bytes bpath = _to_bytes(path)
         cdef int error
-        cdef Repository repo = Repository()
+        cdef Repository repo = Repository.__new__(Repository)
         error = git_repository_init(cython.address(repo._repository), bpath,
                                     bare)
         check_error(error)
@@ -165,7 +166,7 @@ cdef class Repository:
         cdef bytes burl = _to_bytes(url, u"ascii")
         cdef bytes bpath = _to_bytes(path)
         cdef int error
-        cdef Repository repo = Repository()
+        cdef Repository repo = Repository.__new__(Repository)
         error = git_clone(cython.address(repo._repository), burl, bpath, NULL)
         check_error(error)
         assert_Repository(repo)
@@ -197,7 +198,7 @@ cdef class Repository:
             raise LibGit2ReferenceError('Invalid reference name {!r}'.format(
                 name))
         cdef int error
-        cdef Reference ref = Reference()
+        cdef Reference ref = Reference.__new__(Reference)
         error = git_reference_lookup(cython.address(ref._reference),
                                      self._repository, bname)
         try:
@@ -452,7 +453,7 @@ cdef class Repository:
             error = git_repository_head(cython.address(_reference),
                                         self._repository)
             check_error(error)
-            reference = Reference()
+            reference = Reference.__new__(Reference)
             reference._reference = _reference
             return reference
 
