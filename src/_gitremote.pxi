@@ -48,7 +48,7 @@ cdef GitRemote _load_GitRemote(git_repository *repo, const char *name):
     cdef git_remote *gitremote
     error = git_remote_load(cython.address(gitremote), repo, name)
     check_error(error)
-    cdef GitRemote remote = GitRemote()
+    cdef GitRemote remote = GitRemote.__new__(GitRemote)
     remote._remote = gitremote
     return remote
 
@@ -59,7 +59,7 @@ cdef GitRemote _create_GitRemote(git_repository *repo, const char * name,
     cdef git_remote *gitremote
     error = git_remote_create(cython.address(gitremote), repo, name, url)
     check_error(error)
-    cdef GitRemote remote = GitRemote()
+    cdef GitRemote remote = GitRemote.__new__(GitRemote)
     remote._remote = gitremote
     return remote
 
