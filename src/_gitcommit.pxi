@@ -60,7 +60,7 @@ cdef class GitCommit(GitObject):
 
     def ancestor(GitCommit self, unsigned int generation):
         cdef int error
-        cdef GitCommit parent = GitCommit()
+        cdef GitCommit parent = GitCommit.__new__(GitCommit)
         error = git_commit_nth_gen_ancestor(<git_commit**>cython.address(parent._object),
                                             <git_commit*>self._object, generation)
         check_error(error)

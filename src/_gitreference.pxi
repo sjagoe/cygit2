@@ -155,10 +155,11 @@ cdef class Reference:
     def resolve(Reference self):
         cdef int error
         cdef git_ref_t type_ = self._type()
+        cdef Reference ref
         if type_ == GIT_REF_OID:
             return self
         if type_ == GIT_REF_SYMBOLIC:
-            ref = Reference()
+            ref = Reference.__new__(Reference)
             error = git_reference_resolve(cython.address(ref._reference),
                                           self._reference)
             check_error(error)
