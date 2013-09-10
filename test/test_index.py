@@ -132,7 +132,6 @@ class IndexTest(utils.RepoTestCase):
         hello_mode = index['hello.txt'].mode
         self.assertEqual(hello_mode, 33188)
 
-    @unittest.skip('Not Implemented')
     def test_bare_index(self):
         index = pygit2.Index(os.path.join(self.repo.path, 'index'))
         self.assertEqual([x.hex for x in index],

@@ -36,6 +36,7 @@ from _index cimport (
     git_index_free,
     git_index_get_byindex,
     git_index_get_bypath,
+    git_index_open,
 )
 
 
@@ -105,13 +106,33 @@ cdef class GitIndex:
 
     cdef git_index *_index
 
+    cdef int _is_bare
+
     def __cinit__(GitIndex self):
         self._index = NULL
+        self._is_bare = 0
 
     def __dealloc__(GitIndex self):
         if self._index is not NULL:
             git_index_free(self._index)
             self._index = NULL
+
+    def __init__(GitIndex self, path):
+        cdef int error
+        cdef bytes bpath
+        cdef char *c_path
+        if isinstance(path, unicode):
+            bpath = path.encode(DEFAULT_ENCODING)
+        else:
+            bpath = path
+        c_path = bpath
+        error = git_index_open(cython.address(self._index), c_path)
+        check_error(error)
+        self._is_bare = 1
+
+    def add(GitIndex self, path):
+        if self._is_bare != 0:
+            raise LibGit2Error('Cannot add to bare index')
 
     def __len__(GitIndex self):
         cdef size_t count = git_index_entrycount(self._index)

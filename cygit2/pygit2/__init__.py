@@ -28,6 +28,7 @@
 from cygit2._cygit2 import (
     Config,
     GitCommit as Commit,
+    GitIndex as Index,
     GitObjectType,
     GitOid as Oid,
     GitReferenceType,
