@@ -121,6 +121,11 @@ cdef assert_GitRemote(GitRemote remote):
         raise LibGit2Error('Remote Uninitialized')
 
 
+cdef assert_Reference(Reference reference):
+    if reference._reference is NULL:
+        raise LibGit2Error('Reference uninitialized')
+
+
 cdef void check_error(int error) except *:
     cdef const_git_error *err
     if error != GIT_OK:

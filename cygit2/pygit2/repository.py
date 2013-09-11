@@ -37,6 +37,7 @@ from cygit2._cygit2 import (
 )
 
 from .object import Object
+from .reference import Reference
 from .remote import Remote
 
 
@@ -67,6 +68,10 @@ def hashfile(filepath):
 
 
 class Repository(BaseRepository):
+
+    @property
+    def head(self):
+        return Reference(super(Repository, self).head)
 
     @property
     def remotes(self):
@@ -108,3 +113,6 @@ class Repository(BaseRepository):
             return Remote(super(Repository, self).create_remote(name, url))
         except LibGit2ConfigError as e:
             raise ValueError(e)
+
+    def lookup_reference(self, name):
+        return Reference(super(Repository, self).lookup_reference(name))

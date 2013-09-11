@@ -206,6 +206,7 @@ cdef class Repository:
             check_error(error)
         except LibGit2ReferenceError:
             raise KeyError(name)
+        ref._repository = self
         return ref
 
     def lookup_commit(Repository self, GitOid oid):
@@ -457,6 +458,7 @@ cdef class Repository:
             check_error(error)
             reference = Reference.__new__(Reference)
             reference._reference = _reference
+            reference._repository = self
             return reference
 
     property head_is_detached:
