@@ -69,67 +69,45 @@ class RepositoryFixture(unittest.TestCase):
         shutil.rmtree(self.repo_dir, onerror=onerror)
 
 
-def _format_command(command):
-    if sys.platform == 'win32':
-        return command.format(sep='&')
-    return command.format(sep=';')
-
-
-def _call_git(command):
+def _call_git(command, cwd):
     with open(os.devnull, 'w') as devnull:
-        check_call(_format_command(command), stdout=devnull, stderr=devnull,
-                   shell=True)
+        check_call(command, stdout=devnull, stderr=devnull, cwd=cwd)
 
 
 def _git_get_commit_ids(path):
-    command = '''\
-cd {path} {{sep}} \
-git log --pretty="%H"
-'''.format(path=path)
-    stdout = check_output(_format_command(command), shell=True)
-    return stdout.decode('ascii').strip().split()
+    stdout = check_output(['git', 'log', '--pretty="%H"'], cwd=path)
+    return stdout.decode('ascii').strip().replace('"', '').split()
 
 
 def _git_init(path):
-    command = '''\
-git init {path} {{sep}} \
-cd {path} {{sep}} \
-git config user.name "Test User" {{sep}} \
-git config user.email "test@users.invalid"
-'''.format(path=path)
-    _call_git(command)
+    _call_git(['git', 'init', path], cwd=os.path.dirname(path))
+    _call_git(['git', 'config', 'user.name', 'Test User'], cwd=path)
+    _call_git(['git', 'config', 'user.email', 'test@users.invalid'], cwd=path)
 
 
 def _git_add_all(path):
-    command = '''\
-cd {path} {{sep}} \
-git add . \
-'''.format(path=path)
-    _call_git(command)
+    _call_git(['git', 'add', '.'], cwd=path)
 
 
 def _git_commit(path, message):
-    command = '''\
-cd {path} {{sep}} \
-git commit --author="Other User <other@users.invalid>" -m "{message}" \
-'''.format(path=path, message=message)
-    _call_git(command)
+    _call_git(
+        [
+            'git',
+            'commit',
+            '--author="Other User <other@users.invalid>"',
+            '-m',
+            message,
+        ],
+        cwd=path,
+    )
 
 
 def _git_remote_add(path, name, target):
-    command = '''\
-cd {path} {{sep}} \
-git remote add "{name}" "target" \
-'''.format(path=path, name=name, target=target)
-    _call_git(command)
+    _call_git(['git', 'remote', 'add', name, target], cwd=path)
 
 
 def _git_update_ref(path, ref, sha):
-    command = '''\
-cd {path} {{sep}} \
-git update-ref "{ref}" "{sha}" \
-'''.format(path=path, ref=ref, sha=sha)
-    _call_git(command)
+    _call_git(['git', 'update-ref', ref, sha], cwd=path)
 
 
 class Cygit2RepositoryFixture(unittest.TestCase):
@@ -147,7 +125,7 @@ class Cygit2RepositoryFixture(unittest.TestCase):
             self.commits = _git_get_commit_ids(repo_dir)
             _git_update_ref(repo_dir, 'refs/remotes/origin/master', self.commits[0])
         except Exception:
-            shutil.rmtree(self.copy_dir)
+            # shutil.rmtree(self.copy_dir, onerror=onerror)
             raise
         self.repo = Repository.open(repo_dir)
 
