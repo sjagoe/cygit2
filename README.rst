@@ -2,7 +2,7 @@
 cygit2
 ======
 
-.. image:: https://secure.travis-ci.org/sjagoe/cygit2.png
+.. image:: https://secure.travis-ci.org/sjagoe/cygit2.png?branch=master
     :alt: Travis CI Build Status
     :target: https://travis-ci.org/sjagoe/cygit2
 
